@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -24,7 +26,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  void _signUp() {
+
+  void _signUp() async {
     // 비밀번호 확인
     if (_pwController.text != _rePwController.text) {
       setState(() {
@@ -33,19 +36,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    // 비밀번호 일치 시, 회원가입 진행
     setState(() {
       _isPasswordMatched = true;
     });
 
-    // TODO: 가입 처리 로직
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('가입이 완료되었습니다!')),
-    );
+    // FastAPI 서버에 회원가입 정보 전송
+    final url = Uri.parse('http://43.200.24.193:5000/signup');  // 여기에 EC2 퍼블릭 IP 입력
 
-    // 회원가입 후 다른 화면으로 이동
-    Navigator.pop(context);  // 로그인 화면으로 돌아가기
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": _idController.text.trim(),
+          "password": _pwController.text.trim(),
+          "name": _nameController.text.trim(),
+          "phone": _phoneController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(responseData['message'] ?? '가입 성공')),
+        );
+        Navigator.pop(context); // 로그인 화면으로 돌아가기
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('서버 오류: 가입 실패')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('네트워크 오류: $e')),
+      );
+    }
   }
+
 
   Widget _buildTextField(String hint, TextEditingController controller,
       {bool obscure = false, Widget? suffix}) {

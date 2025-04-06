@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -12,28 +14,51 @@ class _StartScreenState extends State<StartScreen> {
   final TextEditingController _pwController = TextEditingController();
   bool _saveId = false;
 
-  void _login() {
-    final id = _idController.text;
-    final pw = _pwController.text;
+  void _login() async {
+    final id = _idController.text.trim();
+    final pw = _pwController.text.trim();
 
-    if (id == 'test@naver.com' && pw == '1234') {
-      Navigator.pushReplacementNamed(context, '/notification');
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('로그인 실패'),
-          content: const Text('아이디 또는 비밀번호가 올바르지 않습니다.'),
-          actions: [
-            TextButton(
-              child: const Text('확인'),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        ),
+    final url = Uri.parse('http://43.200.24.193:5000/login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": id,
+          "password": pw,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(responseData['message'])),
+        );
+        Navigator.pushReplacementNamed(context, '/notification');
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('로그인 실패'),
+            content: Text(responseData['message'] ?? '서버 오류'),
+            actions: [
+              TextButton(
+                child: const Text('확인'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("네트워크 오류: $e")),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +73,7 @@ class _StartScreenState extends State<StartScreen> {
             right: 0,
             child: Center(
               child: Image.asset(
-                'assets/logo.png',
+                'assets/sori_icon.png',
                 width: 80,
               ),
             ),
