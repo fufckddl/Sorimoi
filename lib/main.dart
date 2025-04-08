@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mysql_client/mysql_client.dart';
+import 'package:pj1/voice_recognition.dart';
+import 'package:pj1/voice_text.dart';
 
 import 'splash_screen.dart';
 import 'auth_choice_screen.dart';
@@ -60,6 +62,8 @@ class SoriMoiApp extends StatelessWidget {
         // 개별 화면들 (직접 이동 시)
         '/findId': (context) => const FindIdScreen(),
         '/findPassword': (context) => const FindPasswordScreen(),
+        '/voice' : (context) => const VoiceRecognitionScreen(),
+        '/voiceText' : (context) => const VoiceTextScreen(),
       },
     );
   }

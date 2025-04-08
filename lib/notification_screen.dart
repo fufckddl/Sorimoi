@@ -35,7 +35,9 @@ class NotificationScreen extends StatelessWidget {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/voice'); // ✅ 알림 켜기 → 다음 화면 이동
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE3D7FB),
                   foregroundColor: Colors.black,
@@ -45,7 +47,9 @@ class NotificationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/voice'); // ✅ 나중에 하기 → 다음 화면 이동
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF6F6F6),
                   foregroundColor: Colors.black,
