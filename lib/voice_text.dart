@@ -42,6 +42,23 @@ class VoiceTextScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 14, height: 1.5),
                 ),
               ),
+              const SizedBox(height: 20),
+              // 🔁 다시 듣기
+              Row(
+                children: [
+                  const Text(
+                    "다시 듣기",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.play_circle_fill, size: 36, color: Colors.black87),
+                    onPressed: () {
+                      // TODO: 실제 오디오 재생 기능 연결 예정
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),

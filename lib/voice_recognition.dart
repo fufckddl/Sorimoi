@@ -13,7 +13,7 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
   bool isListening = false;
-  bool isPlaying = false; // ✅ 재생 상태
+  bool isPlaying = false;
   String message = '';
   String recognizedText = '';
   Timer? _fakeRecognitionTimer;
@@ -63,7 +63,6 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
     setState(() {
       isPlaying = !isPlaying;
     });
-    // TODO: 실제 오디오 재생 기능과 연결 예정
   }
 
   void onSave() {
@@ -75,112 +74,112 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-
-              /// 🔘 마이크 버튼
-              GestureDetector(
-                onTap: toggleVoiceRecognition,
-                child: AnimatedBuilder(
-                  animation: _animation,
-                  builder: (context, child) => Container(
-                    width: isListening ? _animation.value : 60.0,
-                    height: isListening ? _animation.value : 60.0,
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.mic, color: Colors.white, size: 30),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              /// 📌 고정된 안내 텍스트 영역
-              SizedBox(
-                height: 24,
-                child: Center(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              /// ✍️ 실시간 인식된 텍스트
-              Text(
-                recognizedText,
-                style:
-                const TextStyle(fontSize: 14, color: Colors.black87),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 24),
-
-              /// 🎧 재생/일시정지 버튼
-              if (!isListening && recognizedText.isNotEmpty)
-                Column(
-                  children: [
-                    const Text("녹음 다시 듣기"),
-                    IconButton(
-                      icon: Icon(
-                        isPlaying ? Icons.pause_circle : Icons.play_circle,
-                        size: 48,
-                        color: Colors.black87,
+        child: Stack(
+          children: [
+            /// 🧾 고정 레이어 오버레이: 음성 인식 안내 + 실시간 텍스트 (항상 중간 위치 고정)
+            if (message.isNotEmpty)
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      onPressed: togglePlayback,
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        recognizedText,
+                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      ),
+                    ],
+                  ),
                 ),
+              ),
 
-              const Spacer(),
-
-              /// 버튼들
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        isListening = false;
-                        _controller.stop();
-                        _fakeRecognitionTimer?.cancel();
-                        message = '';
-                        recognizedText = '';
-                        isPlaying = false;
-                      });
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("다시하기"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF6F6F6),
-                      foregroundColor: Colors.black,
-                      minimumSize: const Size(150, 48),
+                  const Spacer(),
+
+                  /// 🔘 마이크 버튼
+                  GestureDetector(
+                    onTap: toggleVoiceRecognition,
+                    child: AnimatedBuilder(
+                      animation: _animation,
+                      builder: (context, child) => Container(
+                        width: isListening ? _animation.value : 60.0,
+                        height: isListening ? _animation.value : 60.0,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.mic, color: Colors.white, size: 30),
+                      ),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: onSave,
-                    child: const Text("저장"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE3D7FB),
-                      foregroundColor: Colors.black,
-                      minimumSize: const Size(150, 48),
-                    ),
+
+                  const Spacer(),
+
+                  /// 버튼들
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            isListening = false;
+                            _controller.stop();
+                            _fakeRecognitionTimer?.cancel();
+                            message = '';
+                            recognizedText = '';
+                            isPlaying = false;
+                          });
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text("다시하기"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF6F6F6),
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(150, 48),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: onSave,
+                        child: const Text("저장"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE3D7FB),
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(150, 48),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 100),
                 ],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
