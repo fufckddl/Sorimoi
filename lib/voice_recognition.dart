@@ -141,12 +141,14 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
               ),
             ),
 
-            /// 🧾 음성 인식 텍스트 레이어 (중앙)
+            /// 🧾 음성 인식 텍스트 레이어 (아래로 이동하여 마이크 아래에 위치)
             if (recognizedText.isNotEmpty)
-              Align(
-                alignment: Alignment.center,
+              Positioned(
+                bottom: 260,
+                left: MediaQuery.of(context).size.width * 0.1,
+                right: MediaQuery.of(context).size.width * 0.1,
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  height: 120,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -159,14 +161,16 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                       ),
                     ],
                   ),
-                  child: Text(
-                    recognizedText,
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      recognizedText,
+                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    ),
                   ),
                 ),
               ),
 
-            /// 🧾 메시지 레이어 (하단 버튼 위)
+            /// 🧾 메시지 레이어 (하단 버튼 위, 그림자 제거)
             if (message.isNotEmpty)
               Positioned(
                 bottom: 170,
@@ -177,13 +181,6 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: Text(
                     message,
