@@ -76,45 +76,6 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
       body: SafeArea(
         child: Stack(
           children: [
-            /// 🧾 고정 레이어 오버레이: 음성 인식 안내 + 실시간 텍스트 (항상 중간 위치 고정)
-            if (message.isNotEmpty)
-              Align(
-                alignment: Alignment.center,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        message,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        recognizedText,
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
@@ -179,6 +140,58 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                 ],
               ),
             ),
+
+            /// 🧾 음성 인식 텍스트 레이어 (중앙)
+            if (recognizedText.isNotEmpty)
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    recognizedText,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                ),
+              ),
+
+            /// 🧾 메시지 레이어 (하단 버튼 위)
+            if (message.isNotEmpty)
+              Positioned(
+                bottom: 170,
+                left: 24,
+                right: 24,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
