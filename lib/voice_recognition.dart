@@ -166,7 +166,7 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                           stopResultPolling();
                         },
                         icon: const Icon(Icons.refresh),
-                        label: const Text("다시하기"),
+                        label: const Text("restart"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF6F6F6),
                           foregroundColor: Colors.black,
@@ -175,7 +175,7 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                       ),
                       ElevatedButton(
                         onPressed: onSave,
-                        child: const Text("저장"),
+                        child: const Text("저장!"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE3D7FB),
                           foregroundColor: Colors.black,
