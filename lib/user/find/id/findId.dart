@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'find_id_verify_screen.dart';
+import './idVerify.dart';
 
 class FindIdScreen extends StatefulWidget {
   const FindIdScreen({super.key});
