@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'reset_password_screen.dart';
+import '../../../empty/reset_password_screen.dart';
 
 class VerifyPasswordScreen extends StatefulWidget {
   final String name;

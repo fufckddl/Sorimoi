@@ -80,16 +80,16 @@ class _FindIdVerifyScreenState extends State<FindIdVerifyScreen> {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("회원 정보로 찾기", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  const SizedBox(height: 8),
-                  const Text("회원가입 시 등록된 이름과 휴대폰번호를 입력해주세요.", style: TextStyle(color: Colors.grey)),
+          body: TabBarView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("회원 정보로 찾기", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const SizedBox(height: 8),
+                    const Text("회원가입 시 등록된 이름과 휴대폰번호를 입력해주세요.", style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: TextEditingController(text: widget.name),

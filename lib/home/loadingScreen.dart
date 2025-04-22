@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'auth_choice_screen.dart'; // 5초 후 이동할 화면
+import 'Home.dart'; // 5초 후 이동할 화면
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
