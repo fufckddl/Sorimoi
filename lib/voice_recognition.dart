@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class VoiceRecognitionScreen extends StatefulWidget {
   const VoiceRecognitionScreen({Key? key}) : super(key: key);
@@ -16,7 +18,9 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
   bool isPlaying = false;
   String message = '';
   String recognizedText = '';
-  Timer? _fakeRecognitionTimer;
+  Timer? _resultTimer;
+
+  final String serverUrl = 'http://127.0.0.1:5000'; // ✅ 실제 서버 주소로 수정
 
   @override
   void initState() {
@@ -33,36 +37,80 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
   @override
   void dispose() {
     _controller.dispose();
-    _fakeRecognitionTimer?.cancel();
+    _resultTimer?.cancel();
     super.dispose();
   }
 
-  void toggleVoiceRecognition() {
-    setState(() {
-      isListening = !isListening;
-      if (isListening) {
-        message = "음성 인식이 시작됩니다";
-        recognizedText = '';
-        _controller.repeat(reverse: true);
+  Future<void> startRecognition() async {
+    try {
+      final response = await http.post(Uri.parse('$serverUrl/start'));
+      if (response.statusCode == 200) {
+        print('🎤 인식 시작됨');
+      }
+    } catch (e) {
+      print('❌ 인식 시작 오류: $e');
+    }
+  }
 
-        _fakeRecognitionTimer =
-            Timer.periodic(const Duration(milliseconds: 500), (timer) {
-              setState(() {
-                recognizedText += '음 ';
-              });
-            });
-      } else {
-        message = "음성 인식이 끝났습니다";
-        _controller.stop();
-        _fakeRecognitionTimer?.cancel();
+  Future<void> stopRecognition() async {
+    try {
+      final response = await http.post(Uri.parse('$serverUrl/stop'));
+      if (response.statusCode == 200) {
+        print('🛑 인식 종료됨');
+      }
+    } catch (e) {
+      print('❌ 인식 종료 오류: $e');
+    }
+  }
+
+  Future<String> fetchResult() async {
+    try {
+      final response = await http.get(Uri.parse('$serverUrl/result'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('🎯 결과 받아옴: ${data['text']}');
+        return data['text']?.toString() ?? '';
+      }
+    } catch (e) {
+      print('❌ 결과 요청 오류: $e');
+    }
+    return '';
+  }
+
+  void startResultPolling() {
+    _resultTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final result = await fetchResult();
+      if (result.trim().isNotEmpty && result != recognizedText) {
+        setState(() {
+          recognizedText = result;
+        });
       }
     });
   }
 
-  void togglePlayback() {
+  void stopResultPolling() {
+    _resultTimer?.cancel();
+    _resultTimer = null;
+  }
+
+  Future<void> toggleVoiceRecognition() async {
     setState(() {
-      isPlaying = !isPlaying;
+      isListening = !isListening;
+      message = isListening ? "음성 인식이 시작됩니다" : "음성 인식이 끝났습니다";
     });
+
+    if (isListening) {
+      await startRecognition();
+      _controller.repeat(reverse: true);
+      setState(() {
+        recognizedText = '';
+      });
+      startResultPolling();
+    } else {
+      await stopRecognition();
+      stopResultPolling();
+      _controller.stop();
+    }
   }
 
   void onSave() {
@@ -111,11 +159,11 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                           setState(() {
                             isListening = false;
                             _controller.stop();
-                            _fakeRecognitionTimer?.cancel();
-                            message = '';
                             recognizedText = '';
+                            message = '';
                             isPlaying = false;
                           });
+                          stopResultPolling();
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text("다시하기"),
@@ -141,8 +189,8 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
               ),
             ),
 
-            /// 🧾 음성 인식 텍스트 레이어 (아래로 이동하여 마이크 아래에 위치)
-            if (recognizedText.isNotEmpty)
+            /// 🧾 음성 인식 텍스트 레이어
+            if (recognizedText.trim().isNotEmpty)
               Positioned(
                 bottom: 260,
                 left: MediaQuery.of(context).size.width * 0.1,
@@ -170,7 +218,7 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
                 ),
               ),
 
-            /// 🧾 메시지 레이어 (하단 버튼 위, 그림자 제거)
+            /// 🧾 메시지 레이어
             if (message.isNotEmpty)
               Positioned(
                 bottom: 170,
@@ -195,3 +243,4 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
     );
   }
 }
+
