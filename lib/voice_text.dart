@@ -23,7 +23,7 @@ class VoiceTextScreen extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    "사용자: abce1234", // DB에서 사용자 ID 연동
+                    "사용자: test123", // DB에서 사용자 ID 연동
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ],
