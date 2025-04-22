@@ -28,7 +28,7 @@ Future<void> dbConnector() async {
       port: 3306,
       userName: 'your-db-user',
       password: 'your-database-password',
-      databaseName: 'testdb', // optional
+      databaseName: 'your-db-name', // optional
     );
 
     await conn.connect();
