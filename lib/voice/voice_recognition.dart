@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'dart:math';
 
-class VoiceRecognitionScreen extends StatefulWidget {
-  const VoiceRecognitionScreen({Key? key}) : super(key: key);
+class CombinedVoiceScreen extends StatefulWidget {
+  const CombinedVoiceScreen({Key? key}) : super(key: key);
 
   @override
-  State<VoiceRecognitionScreen> createState() => _VoiceRecognitionScreenState();
+  State<CombinedVoiceScreen> createState() => _CombinedVoiceScreenState();
 }
 
-class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
+class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool isListening = false;
-  bool isPlaying = false;
   String message = '';
   String recognizedText = '';
+  Color micColor = Colors.green;
   Timer? _resultTimer;
+  Timer? _messageTimer;
 
-  final String serverUrl = 'http://127.0.0.1:5000'; // ✅ 실제 서버 주소로 수정
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -38,53 +38,45 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
   void dispose() {
     _controller.dispose();
     _resultTimer?.cancel();
+    _messageTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> startRecognition() async {
-    try {
-      final response = await http.post(Uri.parse('$serverUrl/start'));
-      if (response.statusCode == 200) {
-        print('🎤 인식 시작됨');
-      }
-    } catch (e) {
-      print('❌ 인식 시작 오류: $e');
-    }
+  void showMessage(String text) {
+    setState(() {
+      message = text;
+    });
+    _messageTimer?.cancel();
+    _messageTimer = Timer(const Duration(seconds: 3), () {
+      setState(() {
+        message = '';
+      });
+    });
   }
 
-  Future<void> stopRecognition() async {
-    try {
-      final response = await http.post(Uri.parse('$serverUrl/stop'));
-      if (response.statusCode == 200) {
-        print('🛑 인식 종료됨');
-      }
-    } catch (e) {
-      print('❌ 인식 종료 오류: $e');
-    }
-  }
+  Future<void> toggleVoiceRecognition() async {
+    setState(() {
+      isListening = !isListening;
+    });
 
-  Future<String> fetchResult() async {
-    try {
-      final response = await http.get(Uri.parse('$serverUrl/result'));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('🎯 결과 받아옴: ${data['text']}');
-        return data['text']?.toString() ?? '';
-      }
-    } catch (e) {
-      print('❌ 결과 요청 오류: $e');
+    if (isListening) {
+      _controller.repeat(reverse: true);
+      setState(() {
+        recognizedText = '';
+        micColor = Colors.green;
+      });
+      startResultPolling();
+      showMessage("음성 인식이 시작됩니다");
+    } else {
+      stopResultPolling();
+      _controller.stop();
+      showMessage("음성 인식이 끝났습니다");
     }
-    return '';
   }
 
   void startResultPolling() {
-    _resultTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
-      final result = await fetchResult();
-      if (result.trim().isNotEmpty && result != recognizedText) {
-        setState(() {
-          recognizedText = result;
-        });
-      }
+    _resultTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+      await fetchResult();
     });
   }
 
@@ -93,28 +85,41 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
     _resultTimer = null;
   }
 
-  Future<void> toggleVoiceRecognition() async {
-    setState(() {
-      isListening = !isListening;
-      message = isListening ? "음성 인식이 시작됩니다" : "음성 인식이 끝났습니다";
-    });
+  Future<void> fetchResult() async {
+    final mockTexts = ['안녕하세요', '반갑습니다', '이것은 테스트입니다'];
+    final speeds = ['slow', 'normal', 'fast'];
 
-    if (isListening) {
-      await startRecognition();
-      _controller.repeat(reverse: true);
-      setState(() {
-        recognizedText = '';
-      });
-      startResultPolling();
-    } else {
-      await stopRecognition();
-      stopResultPolling();
-      _controller.stop();
-    }
+    final text = mockTexts[Random().nextInt(mockTexts.length)];
+    final speed = speeds[Random().nextInt(speeds.length)];
+
+    setState(() {
+      recognizedText = text;
+
+      switch (speed) {
+        case 'slow':
+          micColor = Colors.blue;
+          break;
+        case 'fast':
+          micColor = Colors.red;
+          break;
+        default:
+          micColor = Colors.green;
+      }
+    });
   }
 
-  void onSave() {
-    Navigator.pushNamed(context, '/voiceText');
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 0) {
+      // 현재 CombinedVoiceScreen 이므로 그대로 유지
+    } else if (index == 1) {
+      Navigator.pushNamed(context, '/home');
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/profileHome'); // ✅ 프로필로 이동
+    }
   }
 
   @override
@@ -123,124 +128,143 @@ class _VoiceRecognitionScreenState extends State<VoiceRecognitionScreen>
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
+          alignment: Alignment.topCenter,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(),
-
-                  /// 🔘 마이크 버튼
-                  GestureDetector(
-                    onTap: toggleVoiceRecognition,
-                    child: AnimatedBuilder(
-                      animation: _animation,
-                      builder: (context, child) => Container(
-                        width: isListening ? _animation.value : 60.0,
-                        height: isListening ? _animation.value : 60.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.mic, color: Colors.white, size: 30),
+            Column(
+              children: [
+                const SizedBox(height: 160),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          isListening = false;
+                          _controller.stop();
+                          recognizedText = '';
+                          message = '';
+                          micColor = Colors.green;
+                        });
+                        stopResultPolling();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("다시하기"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF6F6F6),
+                        foregroundColor: Colors.black,
+                        minimumSize: const Size(150, 48),
                       ),
                     ),
-                  ),
-
-                  const Spacer(),
-
-                  /// 버튼들
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            isListening = false;
-                            _controller.stop();
-                            recognizedText = '';
-                            message = '';
-                            isPlaying = false;
-                          });
-                          stopResultPolling();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text("restart"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF6F6F6),
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size(150, 48),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/voiceRecording');
+                      },
+                      child: const Text("저장!"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE3D7FB),
+                        foregroundColor: Colors.black,
+                        minimumSize: const Size(150, 48),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      ElevatedButton(
-                        onPressed: onSave,
-                        child: const Text("저장!"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE3D7FB),
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size(150, 48),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("사용자: test123",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          height: 100,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF4F4),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SingleChildScrollView(
+                            child: Text(
+                              recognizedText.isNotEmpty
+                                  ? recognizedText
+                                  : '여기에 음성 인식 결과가 표시됩니다.',
+                              style: const TextStyle(fontSize: 14, height: 1.5),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-
-            /// 🧾 음성 인식 텍스트 레이어
-            if (recognizedText.trim().isNotEmpty)
-              Positioned(
-                bottom: 260,
-                left: MediaQuery.of(context).size.width * 0.1,
-                right: MediaQuery.of(context).size.width * 0.1,
-                child: Container(
-                  height: 120,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    child: Text(
-                      recognizedText,
-                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      ],
                     ),
                   ),
                 ),
+              ],
+            ),
+            Positioned(
+              top: 40,
+              child: GestureDetector(
+                onTap: toggleVoiceRecognition,
+                child: AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Container(
+                      width: _animation.value,
+                      height: _animation.value,
+                      decoration: BoxDecoration(
+                        color: micColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.mic, color: Colors.white, size: 30),
+                    );
+                  },
+                ),
               ),
-
-            /// 🧾 메시지 레이어
+            ),
             if (message.isNotEmpty)
               Positioned(
-                bottom: 170,
-                left: 24,
-                right: 24,
+                top: 140,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.black.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
               ),
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.purple,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.mic), label: '연습하기'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
+        ],
+      ),
     );
   }
 }
-

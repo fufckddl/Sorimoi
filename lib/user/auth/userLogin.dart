@@ -137,7 +137,7 @@ class _StartScreenState extends State<StartScreen> {
                   ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: Colors.tealAccent,
                       minimumSize: const Size.fromHeight(50),
                     ),
                     child: const Text('로그인'),

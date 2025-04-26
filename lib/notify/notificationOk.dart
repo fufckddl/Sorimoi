@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({Key? key}) : super(key: key);
 
-  // 🔔 알림 허용 다이얼로그
   void _showPermissionDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -22,7 +21,7 @@ class NotificationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                '직교, 사운드 및 아이콘 배지가 알림에 포함될 수 있습니다.\n설정에서 이를 구성할 수 있습니다.',
+                '직교, 사운드 및 아이콘 배지가 알림에\n포함될 수 있습니다. 설정에서 이를 구성할 수 있습니다.',
                 style: TextStyle(color: Colors.grey, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
@@ -33,8 +32,8 @@ class NotificationScreen extends StatelessWidget {
                   Expanded(
                     child: TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushNamed(context, '/userHome');
+                        Navigator.pop(context); // 다이얼로그 닫고
+                        Navigator.pushNamed(context, '/HomeScreen');
                       },
                       child: const Text('허용 안 함'),
                     ),
@@ -44,7 +43,7 @@ class NotificationScreen extends StatelessWidget {
                     child: TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, '/userHome');
+                        Navigator.pushNamed(context, '/HomeScreen');
                       },
                       child: const Text('허용'),
                     ),
@@ -58,7 +57,6 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 
-  // 📱 알림 UI 화면
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,7 +70,7 @@ class NotificationScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Center(
                 child: Image.asset(
-                  'assets/notification_sample.png', // ✅ 여기에 이미지 파일 필요
+                  'assets/notification_sample.png',
                   width: 300,
                 ),
               ),
@@ -90,13 +88,8 @@ class NotificationScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const Spacer(),
-
-              // 🟣 알림 켜기 버튼 (다이얼로그)
               ElevatedButton(
-                onPressed: () {
-                  print("✅ 알림 켜기 버튼 눌림"); // 디버깅용 로그
-                  _showPermissionDialog(context);
-                },
+                onPressed: () => _showPermissionDialog(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE3D7FB),
                   foregroundColor: Colors.black,
@@ -104,10 +97,7 @@ class NotificationScreen extends StatelessWidget {
                 ),
                 child: const Text('알림 켜기'),
               ),
-
               const SizedBox(height: 12),
-
-              // ⚪ 나중에 하기 버튼
               ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/userHome');
@@ -119,7 +109,6 @@ class NotificationScreen extends StatelessWidget {
                 ),
                 child: const Text('나중에 하기'),
               ),
-
               const SizedBox(height: 20),
             ],
           ),
