@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:math';
 
 class CombinedVoiceScreen extends StatefulWidget {
@@ -19,6 +21,8 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   Color micColor = Colors.green;
   Timer? _resultTimer;
   Timer? _messageTimer;
+
+  final String serverUrl = 'http://127.0.0.1:5000'; // 서버 주소 맞게 수정해줘
 
   int _selectedIndex = 1;
 
@@ -54,29 +58,50 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
     });
   }
 
-  Future<void> toggleVoiceRecognition() async {
-    setState(() {
-      isListening = !isListening;
-    });
-
-    if (isListening) {
-      _controller.repeat(reverse: true);
-      setState(() {
-        recognizedText = '';
-        micColor = Colors.green;
-      });
-      startResultPolling();
-      showMessage("음성 인식이 시작됩니다");
-    } else {
-      stopResultPolling();
-      _controller.stop();
-      showMessage("음성 인식이 끝났습니다");
+  Future<void> startRecognition() async {
+    try {
+      final response = await http.post(Uri.parse('$serverUrl/start'));
+      if (response.statusCode == 200) {
+        print('🎤 인식 시작됨');
+      }
+    } catch (e) {
+      print('❌ 인식 시작 오류: $e');
     }
   }
 
+  Future<void> stopRecognition() async {
+    try {
+      final response = await http.post(Uri.parse('$serverUrl/stop'));
+      if (response.statusCode == 200) {
+        print('🛑 인식 종료됨');
+      }
+    } catch (e) {
+      print('❌ 인식 종료 오류: $e');
+    }
+  }
+
+  Future<String> fetchResultFromServer() async {
+    try {
+      final response = await http.get(Uri.parse('$serverUrl/result'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('🎯 결과 받아옴: ${data['text']}');
+        return data['text']?.toString() ?? '';
+      }
+    } catch (e) {
+      print('❌ 결과 요청 오류: $e');
+    }
+    return '';
+  }
+
   void startResultPolling() {
-    _resultTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
-      await fetchResult();
+    _resultTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final result = await fetchResultFromServer();
+      if (result.trim().isNotEmpty && result != recognizedText) {
+        setState(() {
+          recognizedText = result;
+        });
+      }
     });
   }
 
@@ -85,27 +110,26 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
     _resultTimer = null;
   }
 
-  Future<void> fetchResult() async {
-    final mockTexts = ['안녕하세요', '반갑습니다', '이것은 테스트입니다'];
-    final speeds = ['slow', 'normal', 'fast'];
-
-    final text = mockTexts[Random().nextInt(mockTexts.length)];
-    final speed = speeds[Random().nextInt(speeds.length)];
-
+  Future<void> toggleVoiceRecognition() async {
     setState(() {
-      recognizedText = text;
-
-      switch (speed) {
-        case 'slow':
-          micColor = Colors.blue;
-          break;
-        case 'fast':
-          micColor = Colors.red;
-          break;
-        default:
-          micColor = Colors.green;
-      }
+      isListening = !isListening;
     });
+
+    if (isListening) {
+      await startRecognition();
+      _controller.repeat(reverse: true);
+      setState(() {
+        recognizedText = '';
+        micColor = Colors.green;
+      });
+      startResultPolling();
+      showMessage("음성 인식이 시작됩니다");
+    } else {
+      await stopRecognition();
+      stopResultPolling();
+      _controller.stop();
+      showMessage("음성 인식이 끝났습니다");
+    }
   }
 
   void _onItemTapped(int index) {
@@ -113,12 +137,10 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       _selectedIndex = index;
     });
 
-    if (index == 0) {
-      // 현재 CombinedVoiceScreen 이므로 그대로 유지
-    } else if (index == 1) {
+    if (index == 1) {
       Navigator.pushNamed(context, '/home');
     } else if (index == 2) {
-      Navigator.pushNamed(context, '/profileHome'); // ✅ 프로필로 이동
+      Navigator.pushNamed(context, '/profileHome');
     }
   }
 
