@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
-
+//이거 무시해
 class CombinedVoiceScreen extends StatefulWidget {
   const CombinedVoiceScreen({Key? key}) : super(key: key);
 
