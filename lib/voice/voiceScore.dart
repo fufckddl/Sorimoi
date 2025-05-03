@@ -93,7 +93,15 @@ class ScriptPracticeScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(onTap: (index) {
+        if (index == 0) {
+          Navigator.pushNamed(context, '/voiceRecognition'); // 연습하기 페이지로 이동
+        } else if (index == 1) {
+          Navigator.pushNamed(context, '/voiceScore'); // 피드백 페이지로 이동
+        } else if (index == 2) {
+          Navigator.pushNamed(context, '/voiceRecord');
+        }
+      },
         currentIndex: 1,
         items: const [
           BottomNavigationBarItem(

@@ -23,7 +23,7 @@ class ProfileHome extends StatelessWidget {
             child: Column(
               children: [
                 Image.asset(
-                  'assets/hamster.png', // 🐹 햄스터 이미지 (경로는 프로젝트에 맞게 수정)
+                  'assets/hamster.png',
                   width: 100,
                   height: 100,
                 ),
@@ -43,7 +43,7 @@ class ProfileHome extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/login'); // 로그인 화면으로 이동
+                    Navigator.pushReplacementNamed(context, '/userLogin'); // ✅ 수정된 부분
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -53,7 +53,9 @@ class ProfileHome extends StatelessWidget {
                   child: const Text(
                     '로그아웃',
                     style: TextStyle(color: Colors.red),
+
                   ),
+
                 ),
               ],
             ),
@@ -62,14 +64,21 @@ class ProfileHome extends StatelessWidget {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushNamed(context, '/voiceRecognition');
+          } else if (index == 1) {
+            Navigator.pushNamed(context, '/userHome');
+          }
+        },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.record_voice_over),
             label: '연습하기',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: '피드백',
+            icon: Icon(Icons.home),
+            label: '홈',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
