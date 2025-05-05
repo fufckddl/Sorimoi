@@ -1,23 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class ScriptPracticeScreen extends StatelessWidget {
+class ScriptPracticeScreen extends StatefulWidget {
   const ScriptPracticeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 샘플 텍스트
-    final userText =
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
-    final scriptText =
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+  State<ScriptPracticeScreen> createState() => _ScriptPracticeScreenState();
+}
 
+class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
+  String scriptText = "음성 인식 결과 및 피드백을 출력합니다.";
+  List<String> userTexts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserTexts();
+  }
+
+  Future<void> fetchUserTexts() async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:5000/result'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          userTexts = List<String>.from(data['texts'] ?? []);
+        });
+      } else {
+        setState(() {
+          userTexts = ['서버 응답 오류: ${response.statusCode}'];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        userTexts = ['❌ 오류 발생: $e'];
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
         title: const Text(
-          "SSAFY 면접 준비 - 스크립트 2",
+          "",
           style: TextStyle(color: Colors.black, fontSize: 16),
         ),
         centerTitle: true,
@@ -27,7 +57,6 @@ class ScriptPracticeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 점수 표시
             const Text(
               '82점',
               style: TextStyle(
@@ -37,52 +66,43 @@ class ScriptPracticeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 컨트롤 버튼들
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                IconButton(
-                  onPressed: null,
-                  icon: Icon(Icons.mic, color: Colors.black),
-                ),
-                IconButton(
-                  onPressed: null,
-                  icon: Icon(Icons.stop, color: Colors.black),
-                ),
-                IconButton(
-                  onPressed: null,
-                  icon: Icon(Icons.play_arrow, color: Colors.black),
-                ),
-                IconButton(
-                  onPressed: null,
-                  icon: Icon(Icons.refresh, color: Colors.black),
-                ),
+                IconButton(onPressed: null, icon: Icon(Icons.mic, color: Colors.black)),
+                IconButton(onPressed: null, icon: Icon(Icons.stop, color: Colors.black)),
+                IconButton(onPressed: null, icon: Icon(Icons.play_arrow, color: Colors.black)),
+                IconButton(onPressed: null, icon: Icon(Icons.refresh, color: Colors.black)),
               ],
             ),
             const SizedBox(height: 16),
-
-            // 사용자 텍스트 (핑크 박스)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(0xFFFFE4E1), // 연핑크색
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                userText,
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE4E1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: userTexts.isNotEmpty
+                    ? ListView.builder(
+                  itemCount: userTexts.length,
+                  itemBuilder: (context, index) {
+                    return Text(
+                      '• ${userTexts[index]}',
+                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    );
+                  },
+                )
+                    : const Center(child: Text('음성 인식 결과를 가져오는 중...')),
               ),
             ),
             const SizedBox(height: 16),
-
-            // 정답 텍스트 (초록 박스)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Color(0xFFE0FFE0), // 연초록색
+                color: const Color(0xFFE0FFE0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -93,29 +113,21 @@ class ScriptPracticeScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(onTap: (index) {
-        if (index == 0) {
-          Navigator.pushNamed(context, '/voiceRecognition'); // 연습하기 페이지로 이동
-        } else if (index == 1) {
-          Navigator.pushNamed(context, '/voiceScore'); // 피드백 페이지로 이동
-        } else if (index == 2) {
-          Navigator.pushNamed(context, '/voiceRecord');
-        }
-      },
+      bottomNavigationBar: BottomNavigationBar(
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushNamed(context, '/voiceRecognition');
+          } else if (index == 1) {
+            Navigator.pushNamed(context, '/voiceScore');
+          } else if (index == 2) {
+            Navigator.pushNamed(context, '/voiceRecord');
+          }
+        },
         currentIndex: 1,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.mic),
-            label: '녹음',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '기록',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.mic), label: '녹음'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '기록'),
         ],
       ),
     );
