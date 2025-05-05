@@ -20,7 +20,7 @@ class AuthChoiceScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              '소리 모이',
+              'sorimoi.',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
