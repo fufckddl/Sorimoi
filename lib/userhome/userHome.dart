@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pj1/calendar/calendarPopup.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -99,27 +100,32 @@ class HomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: ['월', '화', '수', '목', '금', '토']
-                  .map((day) => Column(
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: ['화', '수', '목'].contains(day)
-                          ? Colors.purple
-                          : Colors.white,
-                      border: Border.all(
+                  .map((day) => GestureDetector(
+                onTap: () {
+                  openAttendanceSheet(context); // ✅ 팝업 연결
+                },
+                child: Column(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: ['화', '수', '목'].contains(day)
                             ? Colors.purple
-                            : Colors.grey,
+                            : Colors.white,
+                        border: Border.all(
+                          color: ['화', '수', '목'].contains(day)
+                              ? Colors.purple
+                              : Colors.grey,
+                        ),
                       ),
+                      child: const Icon(Icons.check, size: 14, color: Colors.white),
                     ),
-                    child: const Icon(Icons.check, size: 14, color: Colors.white),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(day, style: const TextStyle(fontSize: 12)),
-                ],
+                    const SizedBox(height: 2),
+                    Text(day, style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
               ))
                   .toList(),
             ),
