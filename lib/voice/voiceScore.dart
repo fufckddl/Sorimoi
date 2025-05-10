@@ -16,7 +16,7 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
   // 텍스트용 서버
   static const String textServerBase = 'http://127.0.0.1:5001';
   // 오디오용 서버
-  static const String audioServerBase = 'http://your-api-host:5001';
+  static const String audioServerBase = 'http://your-api-host:5000';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? playingUrl;
