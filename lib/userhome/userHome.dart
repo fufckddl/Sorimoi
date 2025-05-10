@@ -99,7 +99,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: ['월', '화', '수', '목', '금', '토', '일']
+              children: ['월', '화', '수', '목', '금', '토']
                   .map((day) => GestureDetector(
                 onTap: () {
                   openAttendanceSheet(context); // ✅ 팝업 연결
@@ -140,20 +140,17 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _pageButton('처음'),
-                  _pageButton('이전'),
-                  _pageButton('1', active: true),
-                  _pageButton('2'),
-                  _pageButton('3'),
-                  _pageButton('다음'),
-                  _pageButton('마지막'),
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _pageButton('처음'),
+                _pageButton('이전'),
+                _pageButton('1', active: true),
+                _pageButton('2'),
+                _pageButton('3'),
+                _pageButton('다음'),
+                _pageButton('마지막'),
+              ],
             ),
           ],
         ),
