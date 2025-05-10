@@ -17,9 +17,12 @@ import 'package:pj1/voice/voiceScore.dart';
 import 'package:pj1/user/profile/profileHome.dart';
 import 'userhome/userHome.dart';           // ScriptPracticeScreen
 import 'package:pj1/voice/voiceRecord.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ko_KR', null);
   await dbConnector();
   runApp(const SoriMoiApp());
 }
