@@ -21,7 +21,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   Timer? _resultTimer;
   Timer? _feedbackTimer;
 
-  final String serverUrl = 'http://127.0.0.1:5000';
+  final String serverUrl = 'http://127.0.0.1:5001';
 
   int _selectedIndex = 1;
 
