@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -59,6 +60,30 @@ class _StartScreenState extends State<StartScreen> {
     }
   }
 
+  Future<void> _kakaoLogin() async {
+    try {
+      bool installed = await isKakaoTalkInstalled();
+      OAuthToken token;
+
+      if (installed) {
+        token = await UserApi.instance.loginWithKakaoTalk();
+      } else {
+        token = await UserApi.instance.loginWithKakaoAccount();
+      }
+
+      User user = await UserApi.instance.me();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('카카오 로그인 성공: ${user.kakaoAccount?.email ?? '이메일 없음'}')),
+      );
+
+      // TODO: 서버로 token.accessToken을 보내서 추가 인증 처리하기
+      Navigator.pushReplacementNamed(context, '/notification');
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('카카오 로그인 실패: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,10 +171,10 @@ class _StartScreenState extends State<StartScreen> {
                   const Divider(),
                   const Text('다른 방법으로 로그인 하기'),
                   const SizedBox(height: 12),
-                  _socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat),
-                  _socialLoginButton('Google 로그인', Colors.grey, Icons.g_mobiledata),
-                  _socialLoginButton('이메일 로그인', Colors.lightBlue, Icons.email),
-                  _socialLoginButton('Apple 로그인', Colors.black, Icons.apple),
+                  _socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
+                  _socialLoginButton('Google 로그인', Colors.grey, Icons.g_mobiledata, () {}),
+                  _socialLoginButton('이메일 로그인', Colors.lightBlue, Icons.email, () {}),
+                  _socialLoginButton('Apple 로그인', Colors.black, Icons.apple, () {}),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -175,13 +200,13 @@ class _StartScreenState extends State<StartScreen> {
     );
   }
 
-  Widget _socialLoginButton(String text, Color? color, IconData icon) {
+  Widget _socialLoginButton(String text, Color? color, IconData icon, VoidCallback onPressed) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       width: double.infinity,
       height: 45,
       child: ElevatedButton.icon(
-        onPressed: () {},
+        onPressed: onPressed,
         icon: Icon(icon, color: Colors.black),
         label: Text(text, style: const TextStyle(color: Colors.black)),
         style: ElevatedButton.styleFrom(
