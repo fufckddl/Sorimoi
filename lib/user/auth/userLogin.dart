@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../calendar/calendarPopup.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -32,14 +35,40 @@ class _StartScreenState extends State<StartScreen> {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
+        // 서버가 반환하는 user_id를 int로 받기
+        final int userId = data['user_id'];
+        final String username = data['user_name'];
+
+        // SharedPreferences 에 저장
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('userId', userId);
+        await prefs.setString("userName", username);
+
         // 1) 출석 체크 API 호출
-        final userId = data['user_id'].toString(); // 백엔드에서 user_id를 반환한다고 가정
         await _markAttendance(userId);
 
-        // 2) 로그인 성공 처리
+        // 2) 로그인 성공 토스트
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'])),
         );
+
+        // 3) 출석 캘린더 팝업 띄우기
+        //await openAttendanceSheet(context, userId);3
+
+        //홈에서 사용자 아이디 넘겨주기
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+          arguments: userId,  // int userId 전달
+        );
+        //알림설정에서 사용자 아이디 넘겨주기
+        Navigator.pushReplacementNamed(
+          context,
+          '/notification',
+          arguments: userId,   // ← 여기를 추가!
+        );
+
+        // 4) 알림 페이지로 이동
         Navigator.pushReplacementNamed(context, '/notification');
       } else {
         // 로그인 실패
@@ -51,7 +80,7 @@ class _StartScreenState extends State<StartScreen> {
   }
 
   /// 백엔드에 오늘 출석을 기록합니다.
-  Future<void> _markAttendance(String userId) async {
+  Future<void> _markAttendance(int userId) async {
     final today = DateTime.now().toIso8601String().split('T').first;
     final url = Uri.parse('http://43.200.24.193:5000/attendance/check');
     try {
@@ -63,8 +92,7 @@ class _StartScreenState extends State<StartScreen> {
           "date": today,
         }),
       );
-      if (res.statusCode == 200 ) {
-        // 백엔드에서 이미 체크된 경우 등 메시지 처리
+      if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         print("출석체크: ${body['message']}");
       } else {
@@ -90,7 +118,6 @@ class _StartScreenState extends State<StartScreen> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
