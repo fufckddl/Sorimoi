@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:math';
-//이거 무시해
+
 class CombinedVoiceScreen extends StatefulWidget {
   const CombinedVoiceScreen({Key? key}) : super(key: key);
 
@@ -16,13 +15,14 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
   bool isListening = false;
-  String message = '';
   String recognizedText = '';
+  String feedbackMessage = '';
   Color micColor = Colors.green;
   Timer? _resultTimer;
-  Timer? _messageTimer;
+  Timer? _feedbackTimer;
 
-  final String serverUrl = 'http://127.0.0.1:5000'; // 서버 주소 맞게 수정해줘
+  final String serverUrl = 'http://your-api-host:5000/speech';
+
 
   int _selectedIndex = 1;
 
@@ -42,20 +42,8 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   void dispose() {
     _controller.dispose();
     _resultTimer?.cancel();
-    _messageTimer?.cancel();
+    _feedbackTimer?.cancel();
     super.dispose();
-  }
-
-  void showMessage(String text) {
-    setState(() {
-      message = text;
-    });
-    _messageTimer?.cancel();
-    _messageTimer = Timer(const Duration(seconds: 3), () {
-      setState(() {
-        message = '';
-      });
-    });
   }
 
   Future<void> startRecognition() async {
@@ -85,8 +73,9 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       final response = await http.get(Uri.parse('$serverUrl/result'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('🎯 결과 받아옴: ${data['text']}');
-        return data['text']?.toString() ?? '';
+        final List<dynamic> rawTexts = data['texts'];
+        final List<String> texts = rawTexts.map((e) => e.toString()).toList();
+        return texts.join('\n'); // ✅ 줄바꿈으로 합쳐서 출력
       }
     } catch (e) {
       print('❌ 결과 요청 오류: $e');
@@ -94,20 +83,44 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
     return '';
   }
 
-  void startResultPolling() {
+  Future<String> fetchFeedbackFromServer() async {
+    try {
+      final response = await http.get(Uri.parse('$serverUrl/feedback'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['feedback']?.toString() ?? '';
+      }
+    } catch (e) {
+      print('❌ 피드백 요청 오류: $e');
+    }
+    return '';
+  }
+
+  void startPolling() {
     _resultTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
       final result = await fetchResultFromServer();
-      if (result.trim().isNotEmpty && result != recognizedText) {
+      if (result.isNotEmpty && result != recognizedText) {
         setState(() {
           recognizedText = result;
         });
       }
     });
+
+    _feedbackTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final feedback = await fetchFeedbackFromServer();
+      if (feedback.isNotEmpty && feedback != feedbackMessage) {
+        setState(() {
+          feedbackMessage = feedback;
+        });
+      }
+    });
   }
 
-  void stopResultPolling() {
+  void stopPolling() {
     _resultTimer?.cancel();
+    _feedbackTimer?.cancel();
     _resultTimer = null;
+    _feedbackTimer = null;
   }
 
   Future<void> toggleVoiceRecognition() async {
@@ -121,14 +134,13 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       setState(() {
         recognizedText = '';
         micColor = Colors.green;
+        feedbackMessage = '';
       });
-      startResultPolling();
-      showMessage("음성 인식이 시작됩니다");
+      startPolling();
     } else {
       await stopRecognition();
-      stopResultPolling();
+      stopPolling();
       _controller.stop();
-      showMessage("음성 인식이 끝났습니다");
     }
   }
 
@@ -155,7 +167,6 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
             Column(
               children: [
                 const SizedBox(height: 160),
-                const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -165,10 +176,10 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                           isListening = false;
                           _controller.stop();
                           recognizedText = '';
-                          message = '';
+                          feedbackMessage = '';
                           micColor = Colors.green;
                         });
-                        stopResultPolling();
+                        stopPolling();
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text("다시하기"),
@@ -232,6 +243,21 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            feedbackMessage.isNotEmpty
+                                ? feedbackMessage
+                                : '여기에 목소리 피드백이 표시됩니다.',
+                            style: const TextStyle(fontSize: 14, height: 1.5),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -258,21 +284,6 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                 ),
               ),
             ),
-            if (message.isNotEmpty)
-              Positioned(
-                top: 140,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    message,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-              ),
           ],
         ),
       ),

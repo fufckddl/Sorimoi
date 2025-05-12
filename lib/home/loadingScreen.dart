@@ -38,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             SizedBox(height: 10),
             Text(
-              '소리 모이',
+              'sorimoi.',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pj1/calendar/calendarPopup.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -98,28 +99,33 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: ['월', '화', '수', '목', '금', '토']
-                  .map((day) => Column(
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: ['화', '수', '목'].contains(day)
-                          ? Colors.purple
-                          : Colors.white,
-                      border: Border.all(
+              children: ['월', '화', '수', '목', '금', '토', '일']
+                  .map((day) => GestureDetector(
+                onTap: () {
+                  openAttendanceSheet(context); // ✅ 팝업 연결
+                },
+                child: Column(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: ['화', '수', '목'].contains(day)
                             ? Colors.purple
-                            : Colors.grey,
+                            : Colors.white,
+                        border: Border.all(
+                          color: ['화', '수', '목'].contains(day)
+                              ? Colors.purple
+                              : Colors.grey,
+                        ),
                       ),
+                      child: const Icon(Icons.check, size: 14, color: Colors.white),
                     ),
-                    child: const Icon(Icons.check, size: 14, color: Colors.white),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(day, style: const TextStyle(fontSize: 12)),
-                ],
+                    const SizedBox(height: 2),
+                    Text(day, style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
               ))
                   .toList(),
             ),
@@ -134,17 +140,20 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _pageButton('처음'),
-                _pageButton('이전'),
-                _pageButton('1', active: true),
-                _pageButton('2'),
-                _pageButton('3'),
-                _pageButton('다음'),
-                _pageButton('마지막'),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _pageButton('처음'),
+                  _pageButton('이전'),
+                  _pageButton('1', active: true),
+                  _pageButton('2'),
+                  _pageButton('3'),
+                  _pageButton('다음'),
+                  _pageButton('마지막'),
+                ],
+              ),
             ),
           ],
         ),
