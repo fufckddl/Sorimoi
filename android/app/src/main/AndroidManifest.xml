@@ -9,6 +9,7 @@
             android:name="com.kakao.sdk.AppKey"
             android:value="964933369a9915e23c10a39dc44ca241" />
 
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
