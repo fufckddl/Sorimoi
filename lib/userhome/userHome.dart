@@ -1,12 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pj1/calendar/calendarPopup.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int? _userId;
+  String? _userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('userId');
+    final nickname = prefs.getString('userName');
+    setState(() {
+      _userId = id;
+      _userName = nickname;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 아직 userId를 불러오는 중이면 로딩 표시
+    if (_userId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -30,15 +62,15 @@ class HomeScreen extends StatelessWidget {
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.star, size: 18, color: Colors.purple),
-                  SizedBox(width: 6),
+                children: [
+                  const Icon(Icons.star, size: 18, color: Colors.purple),
+                  const SizedBox(width: 6),
                   Text(
-                    "abce1234님, 오늘도 오셨군요!",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    "${_userName!}님, 오늘도 오셨군요!",
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(width: 6),
-                  Icon(Icons.star, size: 18, color: Colors.purple),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.star, size: 18, color: Colors.purple),
                 ],
               ),
             ),
@@ -46,7 +78,7 @@ class HomeScreen extends StatelessWidget {
             Center(
               child: Text(
                 "오늘도 멋진 발음 연습을 시작해봐요",
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 24),
@@ -102,7 +134,7 @@ class HomeScreen extends StatelessWidget {
               children: ['월', '화', '수', '목', '금', '토']
                   .map((day) => GestureDetector(
                 onTap: () {
-                  openAttendanceSheet(context); // ✅ 팝업 연결
+                  openAttendanceSheet(context);
                 },
                 child: Column(
                   children: [
@@ -163,7 +195,7 @@ class HomeScreen extends StatelessWidget {
           if (index == 0) {
             Navigator.pushNamed(context, '/voice');
           } else if (index == 2) {
-            Navigator.pushNamed(context, '/profileHome'); // ✅ 프로필 탭 클릭 시 이동
+            Navigator.pushNamed(context, '/profileHome');
           }
         },
         items: const [

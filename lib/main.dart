@@ -1,28 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:mysql_client/mysql_client.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart'; // 🔑 키 해시 출력을 위해 추가
 
 // 📁 화면 import
 import 'package:pj1/home/loadingScreen.dart';
 import 'package:pj1/home/home.dart';
-import 'package:pj1/userhome/userHome2.dart';            // 오늘의 소리 화면
-import 'package:pj1/notify/notification_screen.dart'; // 알림 권한 요청
+import 'package:pj1/userhome/userHome2.dart';
+import 'package:pj1/notify/notification_screen.dart';
 import 'package:pj1/user/auth/userLogin.dart';
 import 'package:pj1/user/auth/userSignup.dart';
 import 'package:pj1/user/find/id/findId.dart';
 import 'package:pj1/user/find/password/findPassword.dart';
-import 'package:pj1/empty/voice_text.dart';           // 음성 텍스트 출력
-import 'package:pj1/voice/voice_recognition.dart';    // CombinedVoiceScreen
-import 'package:pj1/voice/voiceRecording.dart';       // AnalyzingFeedbackScreen
+import 'package:pj1/empty/voice_text.dart';
+import 'package:pj1/voice/voice_recognition.dart';
+import 'package:pj1/voice/voiceRecording.dart';
 import 'package:pj1/voice/voiceScore.dart';
 import 'package:pj1/user/profile/profileHome.dart';
-import 'userhome/userHome.dart';           // ScriptPracticeScreen
+import 'userhome/userHome.dart';
 import 'package:pj1/voice/voiceRecord.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('ko_KR', null);
+
+  // ✅ Kakao SDK 초기화
+  KakaoSdk.init(nativeAppKey: 'your-kakao-native-app-key');
+
+  // 🔑 현재 실행 중인 키 해시 출력
+  final keyHash = await KakaoSdk.origin;
+  print('🔑 현재 실행 중인 키 해시: $keyHash');
+
   await dbConnector();
   runApp(const SoriMoiApp());
 }
@@ -55,6 +65,15 @@ class SoriMoiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+      ],
+      locale: const Locale('ko', 'KR'),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
@@ -63,13 +82,13 @@ class SoriMoiApp extends StatelessWidget {
         '/start': (context) => const StartScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/notification': (context) => const NotificationScreen(),
+        // userId를 arguments로 받아서 HomeScreen 생성
         '/home': (context) => const HomeScreen(),
-        '/userHome': (context) => const HomeScreen(),
         '/recording': (context) => const RecordingHomeScreen(),
         '/findId': (context) => const FindIdScreen(),
         '/findPassword': (context) => const FindPasswordScreen(),
-        '/voice': (context) => const CombinedVoiceScreen(),
-        '/voiceRecognition': (context) => const CombinedVoiceScreen(),
+        //'/voice': (context) => const CombinedVoiceScreen(),
+        //'/voiceRecognition': (context) => const CombinedVoiceScreen(),
         '/voiceText': (context) => const VoiceTextScreen(),
         '/voiceRecording': (context) => const AnalyzingFeedbackScreen(),
         '/scriptPractice': (context) => const ScriptPracticeScreen(),
@@ -78,7 +97,6 @@ class SoriMoiApp extends StatelessWidget {
         '/voiceRecord': (context) => const VoiceRecordScreen(),
         '/userLogin': (context) => const StartScreen(),
       },
-
     );
   }
 }
