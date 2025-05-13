@@ -1,14 +1,21 @@
-// calendarPopup.dart
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'calendar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+/// 로그인 후 받은 [userId]를 전달받아 출석 시트를 열어주는 함수
 Future<void> openAttendanceSheet(BuildContext context) async {
+
+  // SharedPreferences 에서 userId 불러오기
+  final prefs = await SharedPreferences.getInstance();
+  final int userId = prefs.getInt('userId')!;
+
   Future<Set<DateTime>> fetchAttendanceDates(int userId) async {
     final url = Uri.parse('http://43.200.24.193:5000/attendance/$userId');
     final response = await http.get(url);
+    print('fetchAttendanceDates called with userId: $userId');
     if (response.statusCode == 200) {
       final List<dynamic> raw = jsonDecode(response.body);
       return raw
@@ -36,13 +43,14 @@ Future<void> openAttendanceSheet(BuildContext context) async {
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
           child: FutureBuilder<Set<DateTime>>(
-            future: fetchAttendanceDates(1),
+            // 하드코딩된 1 대신 전달받은 userId 사용
+            future: fetchAttendanceDates(userId),
             builder: (ctx, snap) {
               if (snap.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snap.hasError) {
-                return Center(child: Text('에러: ${snap.error}'));
+                return Center(child: Text('에러: \${snap.error}'));
               }
 
               final allDates = snap.data!;

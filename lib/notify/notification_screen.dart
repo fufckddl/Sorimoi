@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({Key? key}) : super(key: key);
-
   // 🔔 알림 허용 다이얼로그
   void _showPermissionDialog(BuildContext context) {
+
     showDialog(
       context: context,
       builder: (context) {
@@ -34,7 +34,7 @@ class NotificationScreen extends StatelessWidget {
                     child: TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, '/userHome');
+                        Navigator.pushReplacementNamed(context, '/home');
                       },
                       child: const Text('허용 안 함'),
                     ),
@@ -44,7 +44,7 @@ class NotificationScreen extends StatelessWidget {
                     child: TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, '/userHome');
+                        Navigator.pushReplacementNamed(context, '/home');
                       },
                       child: const Text('허용'),
                     ),
@@ -61,6 +61,10 @@ class NotificationScreen extends StatelessWidget {
   // 📱 알림 UI 화면
   @override
   Widget build(BuildContext context) {
+    // Route arguments에서 userId 추출
+    final args = ModalRoute.of(context)!.settings.arguments;
+    final int userId = args is int ? args : 0;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -110,7 +114,7 @@ class NotificationScreen extends StatelessWidget {
               // ⚪ 나중에 하기 버튼
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/userHome');
+                  Navigator.pushReplacementNamed(context, '/home');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF6F6F6),

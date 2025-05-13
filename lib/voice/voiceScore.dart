@@ -1,3 +1,5 @@
+// lib/screens/script_practice_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -11,11 +13,15 @@ class ScriptPracticeScreen extends StatefulWidget {
 }
 
 class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
-  static const String serverBase = 'http://43.200.24.193:8000'; // ✅ EC2 주소
+  // 텍스트용 서버
+  static const String textServerBase = 'http://127.0.0.1:5001';
+  // 오디오용 서버
+  static const String audioServerBase = 'http://43.200.24.193:5001';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? playingUrl;
 
+  // 텍스트+오디오 파일 리스트
   List<Map<String, String>> items = [];
 
   @override
@@ -26,22 +32,14 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
 
   Future<void> fetchResultsWithAudio() async {
     try {
-      final resp = await http.get(Uri.parse('$serverBase/result_with_audio'));
+      final resp = await http.get(Uri.parse('$textServerBase/result_with_audio'));
       if (resp.statusCode == 200) {
         final List data = jsonDecode(resp.body);
         setState(() {
-          items = [];
-          for (final e in data) {
-            final text = e['text'] as String;
-            final filename = e['filename'] as String;
-            final lines = text.split(RegExp(r'[.\n]')); // 문장 또는 줄바꿈 기준
-            for (final line in lines) {
-              final trimmed = line.trim();
-              if (trimmed.isNotEmpty) {
-                items.add({'text': trimmed, 'filename': filename});
-              }
-            }
-          }
+          items = data.map<Map<String, String>>((e) => {
+            'text': e['text'] as String,
+            'filename': e['filename'] as String,
+          }).toList();
         });
       } else {
         setState(() => items = []);
@@ -51,8 +49,9 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     }
   }
 
-  Future<void> _onPlay(String file) async {
-    final url = '$serverBase/audio/$file';
+  // ▶️ 또는 ⏸️ 토글 재생
+  Future<void> _onPlay(String filename) async {
+    final url = '$audioServerBase/audio/$filename';
     if (playingUrl == url) {
       await _audioPlayer.stop();
       setState(() => playingUrl = null);
@@ -63,6 +62,7 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     }
   }
 
+  // ⏹️ 강제 중지
   Future<void> _onStop() async {
     await _audioPlayer.stop();
     setState(() => playingUrl = null);
@@ -109,7 +109,7 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                   itemBuilder: (ctx, idx) {
                     final text = items[idx]['text']!;
                     final file = items[idx]['filename']!;
-                    final url = '$serverBase/audio/$file';
+                    final url = '$audioServerBase/audio/$file';
                     final isPlaying = (playingUrl == url);
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -119,8 +119,6 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                           Expanded(
                             child: Text(
                               '• $text',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black87,
@@ -131,7 +129,8 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                             children: [
                               IconButton(
                                 icon: Icon(
-                                    isPlaying ? Icons.pause : Icons.play_arrow),
+                                    isPlaying ? Icons.pause : Icons.play_arrow
+                                ),
                                 onPressed: () => _onPlay(file),
                               ),
                               IconButton(
