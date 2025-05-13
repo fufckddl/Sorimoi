@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -34,8 +35,16 @@ class _StartScreenState extends State<StartScreen> {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        final userId = data['user_id'].toString();
-        await _markAttendance(userId);
+
+        final userId = data['user_id'];
+        final userName = data['user_name'] ?? '';
+
+        // ★ 여기에 SharedPreferences 저장 ★
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('userId', userId);
+        await prefs.setString('userName', userName);
+
+        await _markAttendance(userId.toString());
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'])),
@@ -204,7 +213,7 @@ class _StartScreenState extends State<StartScreen> {
                   const Divider(),
                   const Text('다른 방법으로 로그인 하기'),
                   const SizedBox(height: 12),
-                  _socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
+                  //_socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
                   _socialLoginButton('Google 로그인', Colors.grey, Icons.g_mobiledata, () {}),
                   _socialLoginButton('이메일 로그인', Colors.lightBlue, Icons.email, () {}),
                   _socialLoginButton('Apple 로그인', Colors.black, Icons.apple, () {}),
