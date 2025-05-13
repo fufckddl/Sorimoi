@@ -22,8 +22,11 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   Timer? _feedbackTimer;
 
   final String serverUrl = 'http://127.0.0.1:5000';
+  final String ec2Url = 'http://your-api-host:8000';
 
   int _selectedIndex = 1;
+
+  String? recordedFilename; // ✅ 녹음된 파일명 저장용
 
   @override
   void initState() {
@@ -47,6 +50,15 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
 
   Future<void> startRecognition() async {
     try {
+      // ✅ 녹음 시작 시점에 파일명 고정 생성
+      final now = DateTime.now();
+      recordedFilename =
+      'voice_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}.wav';
+
+      print('🎙️ 녹음 파일명: $recordedFilename');
+
+      // ✅ 여기서 녹음 파일 생성 로직이 들어가야 함 (recordedFilename 기준으로 저장)
+
       final response = await http.post(Uri.parse('$serverUrl/start'));
       if (response.statusCode == 200) {
         print('🎤 인식 시작됨');
@@ -61,6 +73,12 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       final response = await http.post(Uri.parse('$serverUrl/stop'));
       if (response.statusCode == 200) {
         print('🛑 인식 종료됨');
+        await uploadTextToEC2();
+
+        final clearResp = await http.post(Uri.parse('$serverUrl/clear'));
+        if (clearResp.statusCode == 200) {
+          print('🧹 서버 결과 초기화 완료');
+        }
       }
     } catch (e) {
       print('❌ 인식 종료 오류: $e');
@@ -74,7 +92,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
         final data = jsonDecode(response.body);
         final List<dynamic> rawTexts = data['texts'];
         final List<String> texts = rawTexts.map((e) => e.toString()).toList();
-        return texts.join('\n'); // ✅ 줄바꿈으로 합쳐서 출력
+        return texts.join('\n');
       }
     } catch (e) {
       print('❌ 결과 요청 오류: $e');
@@ -93,6 +111,31 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       print('❌ 피드백 요청 오류: $e');
     }
     return '';
+  }
+
+  Future<void> uploadTextToEC2() async {
+    if (recognizedText.trim().isEmpty || recordedFilename == null) {
+      print('⚠️ 텍스트 또는 파일명이 없음. 업로드 생략.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$ec2Url/upload_text'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'text': recognizedText,
+          'filename': recordedFilename,
+        }),
+      );
+      if (response.statusCode == 200) {
+        print('✅ EC2에 텍스트 업로드 성공');
+      } else {
+        print('❌ EC2 업로드 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ EC2 업로드 오류: $e');
+    }
   }
 
   void startPolling() {
