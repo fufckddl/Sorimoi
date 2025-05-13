@@ -82,7 +82,6 @@ class SoriMoiApp extends StatelessWidget {
         '/start': (context) => const StartScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/notification': (context) => const NotificationScreen(),
-        // userId를 arguments로 받아서 HomeScreen 생성
         '/home': (context) => const HomeScreen(),
         '/recording': (context) => const RecordingHomeScreen(),
         '/findId': (context) => const FindIdScreen(),

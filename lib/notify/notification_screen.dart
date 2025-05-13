@@ -3,65 +3,70 @@ import 'package:flutter/material.dart';
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({Key? key}) : super(key: key);
   // 🔔 알림 허용 다이얼로그
-  void _showPermissionDialog(BuildContext context) {
-
-    showDialog(
+  Future<void> _showPermissionDialog(BuildContext context) async {
+    await showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '‘소리모이’에서 알림을 보내고자 합니다.',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '직교, 사운드 및 아이콘 배지가 알림에 포함될 수 있습니다.\n설정에서 이를 구성할 수 있습니다.',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushReplacementNamed(context, '/home');
-                      },
-                      child: const Text('허용 안 함'),
-                    ),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '‘소리모이’에서 알림을 보내고자 합니다.',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '직교, 사운드 및 아이콘 배지가 알림에 포함될 수 있습니다.\n'
+                  '설정에서 이를 구성할 수 있습니다.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      // 팝업 닫고 홈으로
+                      Navigator.of(ctx).pop();
+                      Navigator.of(ctx).pushNamedAndRemoveUntil(
+                        '/home',
+                            (route) => false,
+                      );
+                    },
+                    child: const Text('허용 안 함'),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushReplacementNamed(context, '/home');
-                      },
-                      child: const Text('허용'),
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () async {
+                      // (원한다면) 여기에 알림 허용 상태 저장 예: prefs.setBool('notifAllowed', true);
+                      Navigator.of(ctx).pop();
+                      Navigator.of(ctx).pushNamedAndRemoveUntil(
+                        '/home',
+                            (route) => false,
+                      );
+                    },
+                    child: const Text('허용'),
                   ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   // 📱 알림 UI 화면
   @override
   Widget build(BuildContext context) {
-    // Route arguments에서 userId 추출
+    // arguments 로 전달된 userId (필요 없으면 지워도 됩니다)
     final args = ModalRoute.of(context)!.settings.arguments;
     final int userId = args is int ? args : 0;
 
@@ -69,14 +74,14 @@ class NotificationScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
               Center(
                 child: Image.asset(
-                  'assets/notification_sample.png', // ✅ 여기에 이미지 파일 필요
+                  'assets/notification_sample.png',
                   width: 300,
                 ),
               ),
@@ -94,13 +99,8 @@ class NotificationScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const Spacer(),
-
-              // 🟣 알림 켜기 버튼 (다이얼로그)
               ElevatedButton(
-                onPressed: () {
-                  print("✅ 알림 켜기 버튼 눌림"); // 디버깅용 로그
-                  _showPermissionDialog(context);
-                },
+                onPressed: () => _showPermissionDialog(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE3D7FB),
                   foregroundColor: Colors.black,
@@ -108,13 +108,14 @@ class NotificationScreen extends StatelessWidget {
                 ),
                 child: const Text('알림 켜기'),
               ),
-
               const SizedBox(height: 12),
-
-              // ⚪ 나중에 하기 버튼
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
+                  // 다이얼로그 없이 바로 홈으로
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/home',
+                        (route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF6F6F6),
@@ -123,7 +124,6 @@ class NotificationScreen extends StatelessWidget {
                 ),
                 child: const Text('나중에 하기'),
               ),
-
               const SizedBox(height: 20),
             ],
           ),

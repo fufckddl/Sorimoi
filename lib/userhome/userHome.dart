@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pj1/calendar/calendarPopup.dart';
+import 'package:pj1/user/auth/userLogin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int? _userId;
   String? _userName;
+  bool _loading = true;
 
   @override
   void initState() {
@@ -23,21 +25,29 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('userId');
+    print('🔍 loaded userId from prefs: $id');
     final nickname = prefs.getString('userName');
     setState(() {
       _userId = id;
       _userName = nickname;
+      _loading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // 아직 userId를 불러오는 중이면 로딩 표시
-    if (_userId == null) {
+    if (_loading) {
+      //이부분
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
+    // 아직 userId를 불러오는 중이면 로딩 표시
+    if (_userId == null) {
+      return StartScreen();
+    }
+    // — 여기에 id값 콘솔에 출력 —
+    print('🔍 build() → current userId: $_userId');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -172,17 +182,20 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _pageButton('처음'),
-                _pageButton('이전'),
-                _pageButton('1', active: true),
-                _pageButton('2'),
-                _pageButton('3'),
-                _pageButton('다음'),
-                _pageButton('마지막'),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _pageButton('처음'),
+                  _pageButton('이전'),
+                  _pageButton('1', active: true),
+                  _pageButton('2'),
+                  _pageButton('3'),
+                  _pageButton('다음'),
+                  _pageButton('마지막'),
+                ],
+              ),
             ),
           ],
         ),
