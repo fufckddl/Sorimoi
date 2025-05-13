@@ -1,42 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:audioplayers/audioplayers.dart';
 
 class ScriptPracticeScreen extends StatefulWidget {
-  const ScriptPracticeScreen({super.key});
+  const ScriptPracticeScreen({Key? key}) : super(key: key);
 
   @override
   State<ScriptPracticeScreen> createState() => _ScriptPracticeScreenState();
 }
 
 class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
-  String scriptText = "음성 인식 결과 및 피드백을 출력합니다.";
-  List<String> userTexts = [];
+  static const String serverBase = 'http://43.200.24.193:8000'; // ✅ EC2 주소
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? playingUrl;
+
+  List<Map<String, String>> items = [];
 
   @override
   void initState() {
     super.initState();
-    fetchUserTexts();
+    fetchResultsWithAudio();
   }
 
-  Future<void> fetchUserTexts() async {
+  Future<void> fetchResultsWithAudio() async {
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:5000/result'));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final resp = await http.get(Uri.parse('$serverBase/result_with_audio'));
+      if (resp.statusCode == 200) {
+        final List data = jsonDecode(resp.body);
         setState(() {
-          userTexts = List<String>.from(data['texts'] ?? []);
+          items = [];
+          for (final e in data) {
+            final text = e['text'] as String;
+            final filename = e['filename'] as String;
+            final lines = text.split(RegExp(r'[.\n]')); // 문장 또는 줄바꿈 기준
+            for (final line in lines) {
+              final trimmed = line.trim();
+              if (trimmed.isNotEmpty) {
+                items.add({'text': trimmed, 'filename': filename});
+              }
+            }
+          }
         });
       } else {
-        setState(() {
-          userTexts = ['서버 응답 오류: ${response.statusCode}'];
-        });
+        setState(() => items = []);
       }
     } catch (e) {
-      setState(() {
-        userTexts = ['❌ 오류 발생: $e'];
-      });
+      setState(() => items = []);
     }
+  }
+
+  Future<void> _onPlay(String file) async {
+    final url = '$serverBase/audio/$file';
+    if (playingUrl == url) {
+      await _audioPlayer.stop();
+      setState(() => playingUrl = null);
+    } else {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(UrlSource(url));
+      setState(() => playingUrl = url);
+    }
+  }
+
+  Future<void> _onStop() async {
+    await _audioPlayer.stop();
+    setState(() => playingUrl = null);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   @override
@@ -46,16 +81,10 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const BackButton(color: Colors.black),
-        title: const Text(
-          "",
-          style: TextStyle(color: Colors.black, fontSize: 16),
-        ),
-        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
               '82점',
@@ -66,16 +95,6 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                IconButton(onPressed: null, icon: Icon(Icons.mic, color: Colors.black)),
-                IconButton(onPressed: null, icon: Icon(Icons.stop, color: Colors.black)),
-                IconButton(onPressed: null, icon: Icon(Icons.play_arrow, color: Colors.black)),
-                IconButton(onPressed: null, icon: Icon(Icons.refresh, color: Colors.black)),
-              ],
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -84,17 +103,51 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                   color: const Color(0xFFFFE4E1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: userTexts.isNotEmpty
+                child: items.isNotEmpty
                     ? ListView.builder(
-                  itemCount: userTexts.length,
-                  itemBuilder: (context, index) {
-                    return Text(
-                      '• ${userTexts[index]}',
-                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  itemCount: items.length,
+                  itemBuilder: (ctx, idx) {
+                    final text = items[idx]['text']!;
+                    final file = items[idx]['filename']!;
+                    final url = '$serverBase/audio/$file';
+                    final isPlaying = (playingUrl == url);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '• $text',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                    isPlaying ? Icons.pause : Icons.play_arrow),
+                                onPressed: () => _onPlay(file),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.stop),
+                                onPressed: _onStop,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     );
                   },
                 )
-                    : const Center(child: Text('음성 인식 결과를 가져오는 중...')),
+                    : const Center(
+                  child: Text('음성 인식 결과를 가져오는 중...'),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -105,25 +158,21 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                 color: const Color(0xFFE0FFE0),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                scriptText,
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              child: const Text(
+                '음성 인식 결과 및 피드백을 출력합니다.',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushNamed(context, '/voiceRecognition');
-          } else if (index == 1) {
-            Navigator.pushNamed(context, '/voiceScore');
-          } else if (index == 2) {
-            Navigator.pushNamed(context, '/voiceRecord');
-          }
-        },
         currentIndex: 1,
+        onTap: (i) {
+          if (i == 0) Navigator.pushNamed(context, '/voiceRecognition');
+          if (i == 1) Navigator.pushNamed(context, '/voiceScore');
+          if (i == 2) Navigator.pushNamed(context, '/voiceRecord');
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.mic), label: '녹음'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
