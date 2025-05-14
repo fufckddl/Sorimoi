@@ -213,7 +213,7 @@ class _StartScreenState extends State<StartScreen> {
                   const Divider(),
                   const Text('다른 방법으로 로그인 하기'),
                   const SizedBox(height: 12),
-                  //_socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
+                  _socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
                   _socialLoginButton('Google 로그인', Colors.grey, Icons.g_mobiledata, () {}),
                   _socialLoginButton('이메일 로그인', Colors.lightBlue, Icons.email, () {}),
                   _socialLoginButton('Apple 로그인', Colors.black, Icons.apple, () {}),
