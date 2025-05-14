@@ -1,7 +1,25 @@
 import 'package:flutter/material.dart';
 
-class RecordingHomeScreen extends StatelessWidget {
+class RecordingHomeScreen extends StatefulWidget {
   const RecordingHomeScreen({super.key});
+
+  @override
+  State<RecordingHomeScreen> createState() => _RecordingHomeScreenState();
+}
+
+class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
+  List<String> categories = ['SSAFY 면접 준비', '졸업프로젝트 발표 대본'];
+
+  Map<String, List<Map<String, String>>> scriptData = {
+    'SSAFY 면접 준비': [
+      {'name': '스크립트 1', 'score': '80.2'},
+      {'name': '스크립트 2', 'score': '87.8'},
+    ],
+    '졸업프로젝트 발표 대본': [
+      {'name': '스크립트 1', 'score': '68.7'},
+      {'name': '스크립트 2', 'score': '71.9'},
+    ],
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -12,11 +30,13 @@ class RecordingHomeScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         toolbarHeight: 40,
         leading: const SizedBox(),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.menu, color: Colors.black),
-          )
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.black),
+            onPressed: () => _showAddCategoryDialog(context),
+            tooltip: '카테고리 생성',
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Padding(
@@ -34,92 +54,187 @@ class RecordingHomeScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Text(
-                    '오늘의 소리를 녹음해보세요!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const Text('오늘의 소리를 녹음해보세요!',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  const Text(
-                    'SSAFY 면접 준비 - 스크립트 2',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+                  const Text('카테고리를 선택하여 시작하세요',
+                      style: TextStyle(fontSize: 13, color: Colors.grey)),
                   const SizedBox(height: 16),
-                  const Icon(Icons.mic, size: 48),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/voiceRecognition');
-                    },
+                  ElevatedButton.icon(
+                    onPressed: () => _showCategorySelectorDialog(context),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('시작하기'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD9C7F2),
+                      backgroundColor: Colors.deepPurple,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    child: const Text('시작하기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  )
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('파일', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  _fileCard(
-                    title: 'SSAFY 면접 준비',
+            Expanded(
+              child: ListView(
+                children: categories.map((category) {
+                  return _fileCard(
+                    title: category,
                     date: '2024-10-25',
-                    scripts: [
-                      {'name': '스크립트 1', 'score': '80.2'},
-                      {'name': '스크립트 2', 'score': '87.8'},
-                    ],
-                  ),
-                  _fileCard(
-                    title: '졸업프로젝트 발표 대본',
-                    date: '2024-10-25',
-                    scripts: [
-                      {'name': '스크립트 1', 'score': '68.7'},
-                      {'name': '스크립트 2', 'score': '71.9'},
-                    ],
-                  ),
-                ],
+                    scripts: scriptData[category] ?? [],
+                    onDeleteCategory: () => _confirmDeleteCategory(category),
+                    onDeleteScript: (scriptName) {
+                      setState(() {
+                        scriptData[category]?.removeWhere((s) => s['name'] == scriptName);
+                      });
+                    },
+                  );
+                }).toList(),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushNamed(context, '/voiceRecognition');
-          } else if (index == 1) {
-            // 홈이므로 동작 없음
-          } else if (index == 2) {
-            Navigator.pushNamed(context, '/profileHome'); // ✅ 프로필 탭 이동
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.record_voice_over), label: '연습하기'),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
+    );
+  }
+
+  void _showAddCategoryDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('새 카테고리 이름 입력'),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                setState(() {
+                  categories.add(name);
+                  scriptData[name] = [];
+                });
+                Navigator.pop(context);
+                _showScriptTitleDialog(context, name);
+              }
+            },
+            child: const Text('생성'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategorySelectorDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('카테고리를 선택하세요'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...categories.map((category) => ListTile(
+                title: Text(category),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showFileTitleDialog(context, '', category);
+                },
+              )),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text('새 카테고리 생성'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAddCategoryDialog(context);
+                },
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showScriptTitleDialog(BuildContext context, String category) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('스크립트 제목을 입력해주세요.'),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () {
+              final scriptTitle = controller.text.trim();
+              if (scriptTitle.isNotEmpty) {
+                Navigator.pop(context);
+                _showFileTitleDialog(context, scriptTitle, category);
+              }
+            },
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFileTitleDialog(BuildContext context, String scriptTitle, String category) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('파일 제목을 입력해주세요.'),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () {
+              final fileTitle = controller.text.trim();
+              if (fileTitle.isNotEmpty) {
+                Navigator.pop(context);
+                Navigator.pushNamed(
+                  context,
+                  '/voiceRecognition',
+                  arguments: {
+                    'file': fileTitle,
+                    'script': scriptTitle,
+                    'category': category,
+                  },
+                );
+              }
+            },
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteCategory(String category) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('삭제 확인'),
+        content: Text('카테고리 "$category"를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                categories.remove(category);
+                scriptData.remove(category);
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('삭제'),
+          ),
         ],
       ),
     );
@@ -129,6 +244,8 @@ class RecordingHomeScreen extends StatelessWidget {
     required String title,
     required String date,
     required List<Map<String, String>> scripts,
+    required VoidCallback onDeleteCategory,
+    required void Function(String scriptName) onDeleteScript,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -146,11 +263,10 @@ class RecordingHomeScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
               const Spacer(),
-              const Icon(Icons.chevron_left, size: 18),
-              Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              const Icon(Icons.chevron_right, size: 18),
-              const SizedBox(width: 8),
-              const Icon(Icons.delete_outline, size: 18),
+              GestureDetector(
+                onTap: onDeleteCategory,
+                child: const Icon(Icons.delete_outline, size: 18),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -160,8 +276,7 @@ class RecordingHomeScreen extends StatelessWidget {
               children: [
                 const Text('•'),
                 const SizedBox(width: 4),
-                Text(script['name'] ?? ''),
-                const SizedBox(width: 8),
+                Expanded(child: Text(script['name'] ?? '')),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -180,15 +295,15 @@ class RecordingHomeScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                )
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () => onDeleteScript(script['name']!),
+                  tooltip: '스크립트 삭제',
+                ),
               ],
             ),
           )),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.only(left: 12.0),
-            child: Text('스크립트 추가하기 +', style: TextStyle(color: Colors.grey)),
-          )
         ],
       ),
     );
