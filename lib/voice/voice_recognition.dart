@@ -306,7 +306,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                           child: Text(
                             feedbackMessage.isNotEmpty
                                 ? feedbackMessage
-                                : '여기에 목소리 피드백이 표시됩니다.',
+                                : '여기에 목소리 피드백이 표시됩니다!',
                             style:
                             const TextStyle(fontSize: 14, height: 1.5),
                           ),
