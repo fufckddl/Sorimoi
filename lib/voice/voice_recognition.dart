@@ -21,8 +21,10 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   Timer? _resultTimer;
   Timer? _feedbackTimer;
 
-  final String serverUrl = 'http://127.0.0.1:5001';
+  final String serverUrl = 'http://127.0.0.1:5000'; // Flask
+  final String ec2Url = 'http://43.200.24.193:8000'; // EC2
 
+  String? recordedFilename;
   int _selectedIndex = 1;
 
   @override
@@ -47,6 +49,12 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
 
   Future<void> startRecognition() async {
     try {
+      final now = DateTime.now();
+      recordedFilename =
+      'voice_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}.wav';
+
+      print('🎙️ 녹음 파일명: $recordedFilename');
+
       final response = await http.post(Uri.parse('$serverUrl/start'));
       if (response.statusCode == 200) {
         print('🎤 인식 시작됨');
@@ -61,9 +69,35 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       final response = await http.post(Uri.parse('$serverUrl/stop'));
       if (response.statusCode == 200) {
         print('🛑 인식 종료됨');
+        await uploadTextToEC2(); // 저장할 텍스트 전송만 수행
       }
     } catch (e) {
       print('❌ 인식 종료 오류: $e');
+    }
+  }
+
+  Future<void> uploadTextToEC2() async {
+    if (recognizedText.trim().isEmpty || recordedFilename == null) {
+      print('⚠️ 텍스트 또는 파일명이 없음. 업로드 생략.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$ec2Url/upload_text'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'text': recognizedText,
+          'filename': recordedFilename,
+        }),
+      );
+      if (response.statusCode == 200) {
+        print('✅ EC2에 텍스트 업로드 성공');
+      } else {
+        print('❌ EC2 업로드 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ EC2 업로드 오류: $e');
     }
   }
 
@@ -74,7 +108,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
         final data = jsonDecode(response.body);
         final List<dynamic> rawTexts = data['texts'];
         final List<String> texts = rawTexts.map((e) => e.toString()).toList();
-        return texts.join('\n'); // ✅ 줄바꿈으로 합쳐서 출력
+        return texts.join('\n');
       }
     } catch (e) {
       print('❌ 결과 요청 오류: $e');
@@ -170,15 +204,32 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         setState(() {
                           isListening = false;
                           _controller.stop();
                           recognizedText = '';
                           feedbackMessage = '';
                           micColor = Colors.green;
+                          recordedFilename = null;
                         });
                         stopPolling();
+
+                        try {
+                          final clearResp1 =
+                          await http.post(Uri.parse('$serverUrl/clear'));
+                          if (clearResp1.statusCode == 200) {
+                            print('✅ Flask 서버(5000) 초기화 완료');
+                          }
+
+                          final clearResp2 = await http
+                              .post(Uri.parse('$ec2Url/clear_results'));
+                          if (clearResp2.statusCode == 200) {
+                            print('✅ EC2 서버(8000) 초기화 완료');
+                          }
+                        } catch (e) {
+                          print('❌ 다시하기 요청 실패: $e');
+                        }
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text("다시하기"),
@@ -223,7 +274,8 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text("사용자: test123",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
@@ -238,7 +290,8 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                               recognizedText.isNotEmpty
                                   ? recognizedText
                                   : '여기에 음성 인식 결과가 표시됩니다.',
-                              style: const TextStyle(fontSize: 14, height: 1.5),
+                              style:
+                              const TextStyle(fontSize: 14, height: 1.5),
                             ),
                           ),
                         ),
@@ -253,8 +306,9 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                           child: Text(
                             feedbackMessage.isNotEmpty
                                 ? feedbackMessage
-                                : '여기에 목소리 피드백이 표시됩니다.',
-                            style: const TextStyle(fontSize: 14, height: 1.5),
+                                : '여기에 목소리 피드백이 표시됩니다!',
+                            style:
+                            const TextStyle(fontSize: 14, height: 1.5),
                           ),
                         ),
                       ],
@@ -277,7 +331,8 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                         color: micColor,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.mic, color: Colors.white, size: 30),
+                      child:
+                      const Icon(Icons.mic, color: Colors.white, size: 30),
                     );
                   },
                 ),
