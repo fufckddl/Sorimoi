@@ -8,6 +8,8 @@ class RecordingHomeScreen extends StatefulWidget {
 }
 
 class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
+  int _selectedIndex = 1;
+
   List<String> categories = ['SSAFY 면접 준비', '졸업프로젝트 발표 대본'];
 
   Map<String, List<Map<String, String>>> scriptData = {
@@ -20,6 +22,19 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
       {'name': '스크립트 2', 'score': '71.9'},
     ],
   };
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/voice');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/profileHome');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +111,15 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.record_voice_over), label: '연습하기'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
+        ],
       ),
     );
   }
@@ -309,3 +333,4 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
     );
   }
 }
+//
