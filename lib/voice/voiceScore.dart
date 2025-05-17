@@ -1,9 +1,9 @@
-// lib/screens/script_practice_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html; // 웹 전용 종료 감지용
 
 class ScriptPracticeScreen extends StatefulWidget {
   const ScriptPracticeScreen({Key? key}) : super(key: key);
@@ -13,33 +13,61 @@ class ScriptPracticeScreen extends StatefulWidget {
 }
 
 class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
-  // 텍스트용 서버
-  static const String textServerBase = 'http://127.0.0.1:5001';
-  // 오디오용 서버
-  static const String audioServerBase = 'http://43.200.24.193:5001';
+  static const String flaskBase = 'http://127.0.0.1:5000';
+  static const String ec2Base = 'http://43.200.24.193:8000';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? playingUrl;
+  Duration currentPosition = Duration.zero;
+  Duration totalDuration = Duration.zero;
 
-  // 텍스트+오디오 파일 리스트
   List<Map<String, String>> items = [];
 
   @override
   void initState() {
     super.initState();
     fetchResultsWithAudio();
+
+    // 오디오 위치 추적
+    _audioPlayer.onPositionChanged.listen((pos) {
+      setState(() => currentPosition = pos);
+    });
+    _audioPlayer.onDurationChanged.listen((dur) {
+      setState(() => totalDuration = dur);
+    });
+
+    // ✅ 웹 종료 시 텍스트 초기화 요청
+    if (kIsWeb) {
+      html.window.onBeforeUnload.listen((event) {
+        final flaskReq = html.HttpRequest();
+        flaskReq.open('POST', '$flaskBase/clear_text', async: false);
+        flaskReq.send('');
+
+        final ec2Req = html.HttpRequest();
+        ec2Req.open('POST', '$ec2Base/clear_text', async: false);
+        ec2Req.send('');
+      });
+    }
   }
 
   Future<void> fetchResultsWithAudio() async {
     try {
-      final resp = await http.get(Uri.parse('$textServerBase/result_with_audio'));
+      final resp = await http.get(Uri.parse('$ec2Base/result_with_audio'));
       if (resp.statusCode == 200) {
         final List data = jsonDecode(resp.body);
         setState(() {
-          items = data.map<Map<String, String>>((e) => {
-            'text': e['text'] as String,
-            'filename': e['filename'] as String,
-          }).toList();
+          items = [];
+          for (final e in data) {
+            final text = e['text'] as String;
+            final filename = e['filename'] as String;
+            final lines = text.split(RegExp(r'[.\n]'));
+            for (final line in lines) {
+              final trimmed = line.trim();
+              if (trimmed.isNotEmpty) {
+                items.add({'text': trimmed, 'filename': filename});
+              }
+            }
+          }
         });
       } else {
         setState(() => items = []);
@@ -49,23 +77,30 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     }
   }
 
-  // ▶️ 또는 ⏸️ 토글 재생
-  Future<void> _onPlay(String filename) async {
-    final url = '$audioServerBase/audio/$filename';
+  Future<void> _onPlay(String file) async {
+    final url = '$ec2Base/audio/$file';
+
     if (playingUrl == url) {
-      await _audioPlayer.stop();
+      await _audioPlayer.pause();
       setState(() => playingUrl = null);
     } else {
       await _audioPlayer.stop();
       await _audioPlayer.play(UrlSource(url));
-      setState(() => playingUrl = url);
+      setState(() {
+        playingUrl = url;
+        currentPosition = Duration.zero;
+        totalDuration = Duration.zero;
+      });
     }
   }
 
-  // ⏹️ 강제 중지
   Future<void> _onStop() async {
     await _audioPlayer.stop();
-    setState(() => playingUrl = null);
+    setState(() {
+      playingUrl = null;
+      currentPosition = Duration.zero;
+      totalDuration = Duration.zero;
+    });
   }
 
   @override
@@ -109,28 +144,46 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                   itemBuilder: (ctx, idx) {
                     final text = items[idx]['text']!;
                     final file = items[idx]['filename']!;
-                    final url = '$audioServerBase/audio/$file';
+                    final url = '$ec2Base/audio/$file';
                     final isPlaying = (playingUrl == url);
+
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              '• $text',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
-                              ),
+                          Text(
+                            '• $text',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          if (isPlaying)
+                            Slider(
+                              value: currentPosition.inMilliseconds
+                                  .toDouble()
+                                  .clamp(
+                                  0,
+                                  totalDuration.inMilliseconds
+                                      .toDouble()),
+                              max: totalDuration.inMilliseconds > 0
+                                  ? totalDuration.inMilliseconds
+                                  .toDouble()
+                                  : 1.0,
+                              onChanged: (value) async {
+                                await _audioPlayer.seek(Duration(
+                                    milliseconds: value.toInt()));
+                              },
+                            ),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               IconButton(
-                                icon: Icon(
-                                    isPlaying ? Icons.pause : Icons.play_arrow
-                                ),
+                                icon: Icon(isPlaying
+                                    ? Icons.pause
+                                    : Icons.play_arrow),
                                 onPressed: () => _onPlay(file),
                               ),
                               IconButton(
@@ -145,8 +198,7 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                   },
                 )
                     : const Center(
-                  child: Text('음성 인식 결과를 가져오는 중...'),
-                ),
+                    child: Text('음성 인식 결과를 가져오는 중...')),
               ),
             ),
             const SizedBox(height: 16),

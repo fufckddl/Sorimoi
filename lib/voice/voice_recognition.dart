@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:html' as html; // 웹용
+import 'package:flutter/foundation.dart' show kIsWeb;
+// import 'package:flutter/widgets.dart'; // 🔒 모바일용 라이프사이클 감시용
 
 class CombinedVoiceScreen extends StatefulWidget {
   const CombinedVoiceScreen({Key? key}) : super(key: key);
@@ -11,7 +14,9 @@ class CombinedVoiceScreen extends StatefulWidget {
 }
 
 class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin
+// with WidgetsBindingObserver // 🔒 모바일 감시용 (나중에 활성화)
+    {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool isListening = false;
@@ -21,8 +26,8 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   Timer? _resultTimer;
   Timer? _feedbackTimer;
 
-  final String serverUrl = 'http://127.0.0.1:5000'; // Flask
-  final String ec2Url = 'http://43.200.24.193:8000'; // EC2
+  final String serverUrl = 'http://127.0.0.1:5000';
+  final String ec2Url = 'http://43.200.24.193:8000';
 
   String? recordedFilename;
   int _selectedIndex = 1;
@@ -37,13 +42,51 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
     _animation = Tween<double>(begin: 60.0, end: 80.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+
+    // ✅ 웹 종료 시 텍스트 초기화
+    if (kIsWeb) {
+      html.window.onBeforeUnload.listen((event) {
+        // Flask 초기화
+        final flaskReq = html.HttpRequest();
+        flaskReq.open('POST', '$serverUrl/clear_text', async: false);
+        flaskReq.send('');
+
+        // EC2 초기화
+        final ec2Req = html.HttpRequest();
+        ec2Req.open('POST', '$ec2Url/clear_text', async: false);
+        ec2Req.send('');
+      });
+    }
+
+
+    // 🔒 모바일 종료 감지용 (나중에 사용)
+    // WidgetsBinding.instance.addObserver(this);
   }
+
+  // 🔒 모바일 앱 종료 감지용 (추후 실기기에서 사용)
+  /*
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached || state == AppLifecycleState.inactive) {
+      http.post(Uri.parse('$serverUrl/clear_text'));
+      http.post(Uri.parse('$ec2Url/clear_text'));
+    }
+  }
+  */
 
   @override
   void dispose() {
     _controller.dispose();
     _resultTimer?.cancel();
     _feedbackTimer?.cancel();
+
+    // 🔒 모바일 종료 시 텍스트 초기화용 (await 안 됨. 나중에 async 처리 필요)
+    /*
+    http.post(Uri.parse('$serverUrl/clear_text'));
+    http.post(Uri.parse('$ec2Url/clear_text'));
+    */
+
+    // WidgetsBinding.instance.removeObserver(this); // 🔒 나중에 모바일용 해제
     super.dispose();
   }
 
@@ -52,8 +95,6 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       final now = DateTime.now();
       recordedFilename =
       'voice_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}.wav';
-
-      print('🎙️ 녹음 파일명: $recordedFilename');
 
       final response = await http.post(Uri.parse('$serverUrl/start'));
       if (response.statusCode == 200) {
@@ -69,7 +110,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       final response = await http.post(Uri.parse('$serverUrl/stop'));
       if (response.statusCode == 200) {
         print('🛑 인식 종료됨');
-        await uploadTextToEC2(); // 저장할 텍스트 전송만 수행
+        await uploadTextToEC2();
       }
     } catch (e) {
       print('❌ 인식 종료 오류: $e');
@@ -107,8 +148,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List<dynamic> rawTexts = data['texts'];
-        final List<String> texts = rawTexts.map((e) => e.toString()).toList();
-        return texts.join('\n');
+        return rawTexts.map((e) => e.toString()).join('\n');
       }
     } catch (e) {
       print('❌ 결과 요청 오류: $e');
@@ -133,18 +173,14 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
     _resultTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
       final result = await fetchResultFromServer();
       if (result.isNotEmpty && result != recognizedText) {
-        setState(() {
-          recognizedText = result;
-        });
+        setState(() => recognizedText = result);
       }
     });
 
     _feedbackTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
       final feedback = await fetchFeedbackFromServer();
       if (feedback.isNotEmpty && feedback != feedbackMessage) {
-        setState(() {
-          feedbackMessage = feedback;
-        });
+        setState(() => feedbackMessage = feedback);
       }
     });
   }
@@ -157,9 +193,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   }
 
   Future<void> toggleVoiceRecognition() async {
-    setState(() {
-      isListening = !isListening;
-    });
+    setState(() => isListening = !isListening);
 
     if (isListening) {
       await startRecognition();
@@ -178,15 +212,9 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 1) {
-      Navigator.pushNamed(context, '/home');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/profileHome');
-    }
+    setState(() => _selectedIndex = index);
+    if (index == 1) Navigator.pushNamed(context, '/home');
+    if (index == 2) Navigator.pushNamed(context, '/profileHome');
   }
 
   @override
@@ -216,19 +244,13 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                         stopPolling();
 
                         try {
-                          final clearResp1 =
-                          await http.post(Uri.parse('$serverUrl/clear'));
-                          if (clearResp1.statusCode == 200) {
-                            print('✅ Flask 서버(5000) 초기화 완료');
-                          }
-
-                          final clearResp2 = await http
-                              .post(Uri.parse('$ec2Url/clear_results'));
-                          if (clearResp2.statusCode == 200) {
-                            print('✅ EC2 서버(8000) 초기화 완료');
+                          final clearResp1 = await http.post(Uri.parse('$serverUrl/clear'));
+                          final clearResp2 = await http.post(Uri.parse('$ec2Url/clear_results'));
+                          if (clearResp1.statusCode == 200 && clearResp2.statusCode == 200) {
+                            print('✅ 다시하기: 텍스트 + 음성 초기화 완료');
                           }
                         } catch (e) {
-                          print('❌ 다시하기 요청 실패: $e');
+                          print('❌ 다시하기 오류: $e');
                         }
                       },
                       icon: const Icon(Icons.refresh),
@@ -240,9 +262,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/voiceRecording');
-                      },
+                      onPressed: () => Navigator.pushNamed(context, '/voiceRecording'),
                       child: const Text("저장!"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE3D7FB),
@@ -290,8 +310,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                               recognizedText.isNotEmpty
                                   ? recognizedText
                                   : '여기에 음성 인식 결과가 표시됩니다.',
-                              style:
-                              const TextStyle(fontSize: 14, height: 1.5),
+                              style: const TextStyle(fontSize: 14, height: 1.5),
                             ),
                           ),
                         ),
@@ -307,8 +326,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                             feedbackMessage.isNotEmpty
                                 ? feedbackMessage
                                 : '여기에 목소리 피드백이 표시됩니다!',
-                            style:
-                            const TextStyle(fontSize: 14, height: 1.5),
+                            style: const TextStyle(fontSize: 14, height: 1.5),
                           ),
                         ),
                       ],
@@ -331,8 +349,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
                         color: micColor,
                         shape: BoxShape.circle,
                       ),
-                      child:
-                      const Icon(Icons.mic, color: Colors.white, size: 30),
+                      child: const Icon(Icons.mic, color: Colors.white, size: 30),
                     );
                   },
                 ),
@@ -349,7 +366,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.mic), label: '연습하기'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '기록'),
         ],
       ),
     );
