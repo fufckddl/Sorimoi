@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html; // 웹 전용 종료 감지용
+import 'dart:html' as html;
 
 class ScriptPracticeScreen extends StatefulWidget {
   const ScriptPracticeScreen({Key? key}) : super(key: key);
@@ -18,8 +18,9 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? playingUrl;
-  Duration currentPosition = Duration.zero;
-  Duration totalDuration = Duration.zero;
+
+  final Map<String, Duration> positionMap = {};
+  final Map<String, Duration> durationMap = {};
 
   List<Map<String, String>> items = [];
 
@@ -28,15 +29,22 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     super.initState();
     fetchResultsWithAudio();
 
-    // 오디오 위치 추적
-    _audioPlayer.onPositionChanged.listen((pos) {
-      setState(() => currentPosition = pos);
-    });
-    _audioPlayer.onDurationChanged.listen((dur) {
-      setState(() => totalDuration = dur);
+    _audioPlayer.onPositionChanged.listen((Duration pos) {
+      if (mounted && playingUrl != null) {
+        setState(() {
+          positionMap[playingUrl!] = pos;
+        });
+      }
     });
 
-    // ✅ 웹 종료 시 텍스트 초기화 요청
+    _audioPlayer.onDurationChanged.listen((Duration dur) {
+      if (mounted && playingUrl != null) {
+        setState(() {
+          durationMap[playingUrl!] = dur;
+        });
+      }
+    });
+
     if (kIsWeb) {
       html.window.onBeforeUnload.listen((event) {
         final flaskReq = html.HttpRequest();
@@ -60,13 +68,7 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
           for (final e in data) {
             final text = e['text'] as String;
             final filename = e['filename'] as String;
-            final lines = text.split(RegExp(r'[.\n]'));
-            for (final line in lines) {
-              final trimmed = line.trim();
-              if (trimmed.isNotEmpty) {
-                items.add({'text': trimmed, 'filename': filename});
-              }
-            }
+            items.add({'text': text.trim(), 'filename': filename});
           }
         });
       } else {
@@ -86,10 +88,11 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     } else {
       await _audioPlayer.stop();
       await _audioPlayer.play(UrlSource(url));
+      await Future.delayed(const Duration(milliseconds: 150)); // 🔧 position 안정 대기
       setState(() {
         playingUrl = url;
-        currentPosition = Duration.zero;
-        totalDuration = Duration.zero;
+        positionMap[url] = Duration.zero;
+        durationMap[url] = Duration.zero;
       });
     }
   }
@@ -98,8 +101,6 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     await _audioPlayer.stop();
     setState(() {
       playingUrl = null;
-      currentPosition = Duration.zero;
-      totalDuration = Duration.zero;
     });
   }
 
@@ -147,6 +148,14 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                     final url = '$ec2Base/audio/$file';
                     final isPlaying = (playingUrl == url);
 
+                    final pos = positionMap[url] ?? Duration.zero;
+                    final dur = durationMap[url] ?? Duration.zero;
+
+                    // ✅ clamp 위치 방지
+                    final safePos = pos.inMilliseconds > dur.inMilliseconds
+                        ? dur.inMilliseconds
+                        : pos.inMilliseconds;
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Column(
@@ -160,23 +169,18 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          if (isPlaying)
-                            Slider(
-                              value: currentPosition.inMilliseconds
-                                  .toDouble()
-                                  .clamp(
-                                  0,
-                                  totalDuration.inMilliseconds
-                                      .toDouble()),
-                              max: totalDuration.inMilliseconds > 0
-                                  ? totalDuration.inMilliseconds
-                                  .toDouble()
-                                  : 1.0,
-                              onChanged: (value) async {
-                                await _audioPlayer.seek(Duration(
-                                    milliseconds: value.toInt()));
-                              },
-                            ),
+                          Slider(
+                            value: safePos.toDouble(),
+                            max: dur.inMilliseconds > 0
+                                ? dur.inMilliseconds.toDouble()
+                                : 1.0,
+                            onChanged: isPlaying
+                                ? (value) async {
+                              await _audioPlayer.seek(Duration(
+                                  milliseconds: value.toInt()));
+                            }
+                                : null,
+                          ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -197,8 +201,7 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                     );
                   },
                 )
-                    : const Center(
-                    child: Text('음성 인식 결과를 가져오는 중...')),
+                    : const Center(child: Text('음성 인식 결과를 가져오는 중...')),
               ),
             ),
             const SizedBox(height: 16),
