@@ -68,6 +68,8 @@ class ProfileHome extends StatelessWidget {
           if (index == 0) {
             Navigator.pushNamed(context, '/voiceRecognition');
           } else if (index == 1) {
+            Navigator.pushNamed(context, '/home');
+          }else if (index == 2) {
             Navigator.pushNamed(context, '/userHome');
           }
         },
