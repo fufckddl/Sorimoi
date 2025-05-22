@@ -225,7 +225,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
                 Navigator.pop(context);
                 Navigator.pushNamed(
                   context,
-                  '/voiceRecognition',
+                  '/audioRecognition',
                   arguments: {
                     'file': fileTitle,
                     'script': scriptTitle,
