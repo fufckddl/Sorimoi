@@ -19,41 +19,18 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? playingUrl;
 
-  final Map<String, Duration> positionMap = {};
-  final Map<String, Duration> durationMap = {};
-
-  List<Map<String, String>> items = [];
+  List<Map<String, dynamic>> items = [];
 
   @override
   void initState() {
     super.initState();
     fetchResultsWithAudio();
 
-    _audioPlayer.onPositionChanged.listen((Duration pos) {
-      if (mounted && playingUrl != null) {
-        setState(() {
-          positionMap[playingUrl!] = pos;
-        });
-      }
-    });
-
-    _audioPlayer.onDurationChanged.listen((Duration dur) {
-      if (mounted && playingUrl != null) {
-        setState(() {
-          durationMap[playingUrl!] = dur;
-        });
-      }
-    });
-
     if (kIsWeb) {
       html.window.onBeforeUnload.listen((event) {
-        final flaskReq = html.HttpRequest();
-        flaskReq.open('POST', '$flaskBase/clear_text', async: false);
-        flaskReq.send('');
-
-        final ec2Req = html.HttpRequest();
-        ec2Req.open('POST', '$ec2Base/clear_text', async: false);
-        ec2Req.send('');
+        html.HttpRequest.request('$flaskBase/stop', method: 'POST');
+        html.HttpRequest.request('$flaskBase/clear_text', method: 'POST');
+        html.HttpRequest.request('$ec2Base/clear_text', method: 'POST');
       });
     }
   }
@@ -64,12 +41,11 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
       if (resp.statusCode == 200) {
         final List data = jsonDecode(resp.body);
         setState(() {
-          items = [];
-          for (final e in data) {
-            final text = e['text'] as String;
-            final filename = e['filename'] as String;
-            items.add({'text': text.trim(), 'filename': filename});
-          }
+          items = data.map<Map<String, dynamic>>((e) => {
+            'text': e['text'].toString().trim(),
+            'filename': e['filename'],
+            'score': int.tryParse(e['score'].toString()) ?? 0,
+          }).toList();
         });
       } else {
         setState(() => items = []);
@@ -88,11 +64,8 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     } else {
       await _audioPlayer.stop();
       await _audioPlayer.play(UrlSource(url));
-      await Future.delayed(const Duration(milliseconds: 150)); // 🔧 position 안정 대기
       setState(() {
         playingUrl = url;
-        positionMap[url] = Duration.zero;
-        durationMap[url] = Duration.zero;
       });
     }
   }
@@ -104,6 +77,19 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
     });
   }
 
+  Color getScoreColor(int score) {
+    if (score >= 90) return Colors.green;
+    if (score >= 70) return Colors.blue;
+    if (score >= 60) return Colors.amber;
+    return Colors.red;
+  }
+
+  int getAverageScore() {
+    if (items.isEmpty) return 0;
+    final total = items.map((e) => e['score'] as int).fold(0, (a, b) => a + b);
+    return (total / items.length).round();
+  }
+
   @override
   void dispose() {
     _audioPlayer.dispose();
@@ -112,6 +98,8 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final avgScore = getAverageScore();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -122,12 +110,12 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Text(
-              '82점',
+            Text(
+              '평균 점수: $avgScore점',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Colors.green,
+                color: getScoreColor(avgScore),
               ),
             ),
             const SizedBox(height: 16),
@@ -143,18 +131,12 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                     ? ListView.builder(
                   itemCount: items.length,
                   itemBuilder: (ctx, idx) {
-                    final text = items[idx]['text']!;
-                    final file = items[idx]['filename']!;
+                    final text = items[idx]['text'];
+                    final file = items[idx]['filename'];
+                    final score = items[idx]['score'] ?? 0;
+
                     final url = '$ec2Base/audio/$file';
                     final isPlaying = (playingUrl == url);
-
-                    final pos = positionMap[url] ?? Duration.zero;
-                    final dur = durationMap[url] ?? Duration.zero;
-
-                    // ✅ clamp 위치 방지
-                    final safePos = pos.inMilliseconds > dur.inMilliseconds
-                        ? dur.inMilliseconds
-                        : pos.inMilliseconds;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -168,26 +150,21 @@ class _ScriptPracticeScreenState extends State<ScriptPracticeScreen> {
                               color: Colors.black87,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Slider(
-                            value: safePos.toDouble(),
-                            max: dur.inMilliseconds > 0
-                                ? dur.inMilliseconds.toDouble()
-                                : 1.0,
-                            onChanged: isPlaying
-                                ? (value) async {
-                              await _audioPlayer.seek(Duration(
-                                  milliseconds: value.toInt()));
-                            }
-                                : null,
+                          const SizedBox(height: 4),
+                          Text(
+                            '점수: $score점',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: getScoreColor(score),
+                            ),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               IconButton(
-                                icon: Icon(isPlaying
-                                    ? Icons.pause
-                                    : Icons.play_arrow),
+                                icon: Icon(
+                                    isPlaying ? Icons.pause : Icons.play_arrow),
                                 onPressed: () => _onPlay(file),
                               ),
                               IconButton(
