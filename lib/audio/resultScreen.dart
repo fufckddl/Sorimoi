@@ -1,8 +1,8 @@
-// resultScreen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
+import 'nowRecord.dart'; // ✅ 다시 음성 인식 화면으로 이동하려면 필요
 
 class ResultScreen extends StatefulWidget {
   final String audioPath;
@@ -33,7 +33,7 @@ class _ResultScreenState extends State<ResultScreen> {
       return;
     }
 
-    final uri = Uri.parse('http://43.200.24.193:5000/upload'); // 수정 필요
+    final uri = Uri.parse('http://43.200.24.193:5000/upload');
     final request = http.MultipartRequest('POST', uri);
     request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
@@ -90,6 +90,21 @@ class _ResultScreenState extends State<ResultScreen> {
               onPressed: _isUploading ? null : _uploadAudioFile,
               icon: const Icon(Icons.cloud_upload),
               label: Text(_isUploading ? '업로드 중...' : '서버로 업로드'),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NowRecordScreen()),
+                );
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('다시하기'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                foregroundColor: Colors.black,
+              ),
             ),
           ],
         ),
