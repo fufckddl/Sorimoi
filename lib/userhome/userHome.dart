@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: ['월', '화', '수', '목', '금', '토']
+              children: ['월', '화', '수', '목', '금', '토', '일']
                   .map((day) => GestureDetector(
                 onTap: () {
                   openAttendanceSheet(context);
