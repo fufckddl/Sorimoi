@@ -25,8 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('userId');
-    print('🔍 loaded userId from prefs: $id');
     final nickname = prefs.getString('userName');
+    print('🔍 loaded userId from prefs: $id');
     setState(() {
       _userId = id;
       _userName = nickname;
@@ -37,16 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      //이부분
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    // 아직 userId를 불러오는 중이면 로딩 표시
+
     if (_userId == null) {
       return StartScreen();
     }
-    // — 여기에 id값 콘솔에 출력 —
+
     print('🔍 build() → current userId: $_userId');
 
     return Scaffold(
@@ -184,17 +183,20 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 4),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _pageButton('처음'),
-                  _pageButton('이전'),
-                  _pageButton('1', active: true),
-                  _pageButton('2'),
-                  _pageButton('3'),
-                  _pageButton('다음'),
-                  _pageButton('마지막'),
-                ],
+              child: Align(
+                alignment: Alignment.center,
+                child: Wrap(
+                  spacing: 4,
+                  children: [
+                    _pageButton('처음'),
+                    _pageButton('이전'),
+                    _pageButton('1', active: true),
+                    _pageButton('2'),
+                    _pageButton('3'),
+                    _pageButton('다음'),
+                    _pageButton('마지막'),
+                  ],
+                ),
               ),
             ),
           ],
@@ -280,3 +282,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+//추가
