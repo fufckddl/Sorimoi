@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:html' as html; // 웹용
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:pj1/common/app_drawer.dart';
+import 'package:pj1/common/custom_appbar.dart';
 // import 'package:flutter/widgets.dart'; // 🔒 모바일용 라이프사이클 감시용
 
 class CombinedVoiceScreen extends StatefulWidget {
@@ -221,6 +223,11 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      endDrawer: const AppDrawer(),
+      appBar: const CustomAppBar(
+        title: '연습하기',
+        showBack: false,
+      ),
       body: SafeArea(
         child: Stack(
           alignment: Alignment.topCenter,
@@ -366,7 +373,7 @@ class _CombinedVoiceScreenState extends State<CombinedVoiceScreen>
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.mic), label: '연습하기'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '기록'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
         ],
       ),
     );
