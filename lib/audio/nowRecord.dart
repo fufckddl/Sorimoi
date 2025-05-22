@@ -1,4 +1,4 @@
-//nowRecord.dart
+//nowrecord.dart
 
 import 'package:flutter/material.dart';
 import 'audioRecognition.dart';
