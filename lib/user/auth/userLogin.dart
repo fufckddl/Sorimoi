@@ -21,11 +21,9 @@ class _StartScreenState extends State<StartScreen> {
     final id = _idController.text.trim();
     final pw = _pwController.text.trim();
 
-    final url = Uri.parse('http://43.200.24.193:5000/login');
-
     try {
       final response = await http.post(
-        url,
+        Uri.parse('http://43.200.24.193:5000/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "username": id,
@@ -35,17 +33,16 @@ class _StartScreenState extends State<StartScreen> {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-
         final userId = data['user_id'];
         final userName = data['user_name'] ?? '';
 
-        // ★ 여기에 SharedPreferences 저장 ★
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('userId', userId);
         await prefs.setString('userName', userName);
 
         await _markAttendance(userId.toString());
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'])),
         );
@@ -74,12 +71,12 @@ class _StartScreenState extends State<StartScreen> {
       );
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        print("출석체크: ${body['message']}");
+        debugPrint("✅ 출석체크: ${body['message']}");
       } else {
-        print("출석체크 실패: ${res.statusCode}");
+        debugPrint("❌ 출석체크 실패: ${res.statusCode}");
       }
     } catch (e) {
-      print("출석체크 오류: $e");
+      debugPrint("❌ 출석체크 오류: $e");
     }
   }
 
@@ -87,24 +84,21 @@ class _StartScreenState extends State<StartScreen> {
   Future<void> _kakaoLogin() async {
     try {
       bool installed = await isKakaoTalkInstalled();
-      OAuthToken token;
-
-      if (installed) {
-        token = await UserApi.instance.loginWithKakaoTalk();
-      } else {
-        token = await UserApi.instance.loginWithKakaoAccount();
-      }
+      OAuthToken token = installed
+          ? await UserApi.instance.loginWithKakaoTalk()
+          : await UserApi.instance.loginWithKakaoAccount();
 
       User user = await UserApi.instance.me();
       final kakaoEmail = user.kakaoAccount?.email ?? '이메일 없음';
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('카카오 로그인 성공: $kakaoEmail')),
       );
 
-      // 👉 서버에 token.accessToken 또는 이메일을 전달하는 추가 인증 로직 필요
       Navigator.pushReplacementNamed(context, '/notification');
     } catch (error) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('카카오 로그인 실패: $error')),
       );
@@ -180,22 +174,16 @@ class _StartScreenState extends State<StartScreen> {
                     children: [
                       Checkbox(
                         value: _saveId,
-                        onChanged: (value) {
-                          setState(() => _saveId = value!);
-                        },
+                        onChanged: (value) => setState(() => _saveId = value!),
                       ),
                       const Text('아이디 저장'),
                       const Spacer(),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/findId');
-                        },
+                        onPressed: () => Navigator.pushNamed(context, '/findId'),
                         child: const Text('아이디 찾기'),
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/findPassword');
-                        },
+                        onPressed: () => Navigator.pushNamed(context, '/findPassword'),
                         child: const Text('비밀번호 찾기'),
                       ),
                     ],
@@ -223,9 +211,7 @@ class _StartScreenState extends State<StartScreen> {
                     children: [
                       const Text('소리모이 계정이 없으신가요?'),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/signup');
-                        },
+                        onPressed: () => Navigator.pushNamed(context, '/signup'),
                         child: const Text(
                           '가입하기',
                           style: TextStyle(color: Colors.purple),
@@ -242,7 +228,6 @@ class _StartScreenState extends State<StartScreen> {
     );
   }
 
-  // ✅ 공통 소셜 로그인 버튼
   Widget _socialLoginButton(String text, Color? color, IconData icon, VoidCallback onPressed) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
