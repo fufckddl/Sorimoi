@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
 class BreathingButton extends StatefulWidget {
-  final Color borderColor; // 버튼의 테두리 색상
-  final VoidCallback? onPressed; // 클릭 시 호출될 콜백
-  final double? size; // 버튼의 크기
+  final Color borderColor;
+  final VoidCallback? onPressed;
+  final double? size;
+  final bool animate;
 
-  BreathingButton({
+  const BreathingButton({
+    super.key,
     this.borderColor = const Color(0xFF1E0E62),
     this.onPressed,
-    this.size, // 크기 매개변수 추가
+    this.size,
+    this.animate = true,
   });
 
   @override
@@ -20,24 +23,39 @@ class _BreathingButtonState extends State<BreathingButton>
   late AnimationController _controller;
   late Animation<double> _animation;
 
+  double get startSize => widget.size ?? 120.0;
+
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1000), // 더 빠르고 부드럽게
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
-    double startSize = widget.size ?? 120.0;
-    double endSize = widget.size != null ? 150.0 : startSize + 30;
-
-    _animation = Tween<double>(begin: startSize, end: endSize).animate(
+    _animation = Tween<double>(
+      begin: startSize,
+      end: startSize + 10.0, // 더 subtle한 숨쉬기
+    ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.ease,
+        curve: Curves.easeInOut, // 부드러운 전환
       ),
     );
+
+    if (widget.animate) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BreathingButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animate && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.animate && _controller.isAnimating) {
+      _controller.stop();
+    }
   }
 
   @override
@@ -50,16 +68,14 @@ class _BreathingButtonState extends State<BreathingButton>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (widget.onPressed != null) {
-          widget.onPressed!();
-        }
+        widget.onPressed?.call();
       },
       child: AnimatedBuilder(
         animation: _animation,
         builder: (context, child) {
           return Container(
-            width: _animation.value,
-            height: _animation.value,
+            width: widget.animate ? _animation.value : startSize,
+            height: widget.animate ? _animation.value : startSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: widget.borderColor, width: 30),
