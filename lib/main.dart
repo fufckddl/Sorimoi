@@ -72,6 +72,9 @@ class SoriMoiApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      theme: ThemeData(
+        fontFamily: 'NotoSansKR'
+      ),
       supportedLocales: const [
         Locale('ko', 'KR'),
       ],

@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:pj1/audio/resultScreen.dart';
+
 class AnalyzingFeedbackScreen extends StatefulWidget {
-  const AnalyzingFeedbackScreen({super.key});
+  final String audioPath;
+  final String transcript;
+
+  const AnalyzingFeedbackScreen({
+    super.key,
+    required this.audioPath,
+    required this.transcript,
+  });
 
   @override
   State<AnalyzingFeedbackScreen> createState() => _AnalyzingFeedbackScreenState();
@@ -27,9 +36,15 @@ class _AnalyzingFeedbackScreenState extends State<AnalyzingFeedbackScreen> {
       });
       if (ticks >= 50) {
         timer.cancel();
-
-        // ✅ 분석 완료 후 화면 이동
-        Navigator.pushReplacementNamed(context, '/scriptPractice');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ResultScreen(
+              audioPath: widget.audioPath,
+              transcript: widget.transcript,
+            ),
+          ),
+        );
       }
       ticks++;
     });
