@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pj1/calendar/calendarPopup.dart';
 import 'package:pj1/user/auth/userLogin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:pj1/common/app_drawer.dart';
+import 'package:pj1/common/custom_appbar.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -53,17 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 40,
-        leading: const SizedBox(),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: Icon(Icons.menu, color: Colors.black),
-          )
-        ],
+      endDrawer: const AppDrawer(),
+      appBar: const CustomAppBar(
+        title: '홈',
+        showBack: false,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -285,4 +279,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-//추가

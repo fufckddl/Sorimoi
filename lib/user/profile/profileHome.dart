@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pj1/common/app_drawer.dart';
+import 'package:pj1/common/custom_appbar.dart';
 //추가
 class ProfileHome extends StatefulWidget {
   const ProfileHome({super.key});
@@ -14,13 +16,10 @@ class _ProfileHomeState extends State<ProfileHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+      endDrawer: const AppDrawer(),
+      appBar: const CustomAppBar(
+        title: '나의정보',
+        showBack: true,
       ),
       body: SingleChildScrollView(
         child: Padding(

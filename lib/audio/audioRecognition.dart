@@ -1,4 +1,5 @@
-// ✅ audioRecognition.dart - 실시간 STT + 직접 WAV 저장 (B안)
+//audioRecog.dart1
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -22,6 +23,7 @@ class _RecogAudioState extends State<RecogAudio> {
   final AudioRecorder _recorder = AudioRecorder();
   WebSocketChannel? _channel;
   StreamSubscription<Uint8List>? _recordSub;
+  Timer? _amplitudeTimer;
   List<int> pcmBytes = [];
   String? audioPath;
   bool isRecording = false;
@@ -30,6 +32,7 @@ class _RecogAudioState extends State<RecogAudio> {
   String tempText = '';
   String allText = '';
   Timer? finalTextTimer;
+  String voiceFeedback = '버튼을 눌러 음성인식을 시작하세요';
 
   @override
   void initState() {
@@ -85,13 +88,36 @@ class _RecogAudioState extends State<RecogAudio> {
       pcmBytes.addAll(data);
     });
 
-    setState(() => isRecording = true);
+    // 💬 실시간 데시벨 측정 타이머 시작
+    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 500), (_) async {
+      final amp = await _recorder.getAmplitude();
+      final decibel = amp.current;
+
+      setState(() {
+        if (decibel < -45) {
+          voiceFeedback = '목소리가 너무 작아요';
+          borderColor = Colors.orange; // ✅ 주황색
+        } else if (decibel > -5) {
+          voiceFeedback = '목소리가 너무 커요';
+          borderColor = Colors.purple; // ✅ 보라색
+        } else {
+          voiceFeedback = 'Good, 잘 하고 있어요!';
+          borderColor = Colors.green; // ✅ 초록색
+        }
+      });
+    });
+
+    setState(() {
+      isRecording = true;
+      voiceFeedback = '목소리를 분석 중이에요...';
+    });
   }
 
   Future<void> _stopRecording() async {
     print("🛑 녹음 종료 및 WAV 파일 생성");
     await _recordSub?.cancel();
     await _recorder.stop();
+    _amplitudeTimer?.cancel();
     _channel?.sink.close();
     finalTextTimer?.cancel();
 
@@ -109,7 +135,7 @@ class _RecogAudioState extends State<RecogAudio> {
   }
 
   List<int> _buildWavFile(List<int> pcmData, int sampleRate, int numChannels) {
-    const int byteRate = 16000 * 2 * 1; // sampleRate * bytesPerSample * channels
+    const int byteRate = 16000 * 2 * 1;
     final int dataLength = pcmData.length;
     final int totalLength = 44 + dataLength;
 
@@ -119,12 +145,12 @@ class _RecogAudioState extends State<RecogAudio> {
     header.add(ascii.encode('WAVE'));
     header.add(ascii.encode('fmt '));
     header.add(_intToBytes(16, 4));
-    header.add(_intToBytes(1, 2)); // PCM format
+    header.add(_intToBytes(1, 2));
     header.add(_intToBytes(numChannels, 2));
     header.add(_intToBytes(sampleRate, 4));
     header.add(_intToBytes(byteRate, 4));
-    header.add(_intToBytes(2 * numChannels, 2)); // block align
-    header.add(_intToBytes(16, 2)); // bits per sample
+    header.add(_intToBytes(2 * numChannels, 2));
+    header.add(_intToBytes(16, 2));
     header.add(ascii.encode('data'));
     header.add(_intToBytes(dataLength, 4));
 
@@ -159,6 +185,7 @@ class _RecogAudioState extends State<RecogAudio> {
     _channel?.sink.close();
     _recordSub?.cancel();
     finalTextTimer?.cancel();
+    _amplitudeTimer?.cancel();
     super.dispose();
   }
 
@@ -166,7 +193,13 @@ class _RecogAudioState extends State<RecogAudio> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 100),
+        const SizedBox(height: 60),
+        Text(
+          voiceFeedback,
+          style: const TextStyle(fontSize: 18, color: Colors.deepPurple, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
         SizedBox(
           height: 200,
           child: Center(
@@ -174,6 +207,7 @@ class _RecogAudioState extends State<RecogAudio> {
               onPressed: _toggleRecording,
               borderColor: borderColor,
               size: 180.0,
+              animate: isRecording
             ),
           ),
         ),
