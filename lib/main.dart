@@ -13,12 +13,10 @@ import 'package:pj1/user/auth/userSignup.dart';
 import 'package:pj1/user/find/id/findId.dart';
 import 'package:pj1/user/find/password/findPassword.dart';
 import 'package:pj1/empty/voice_text.dart';
-import 'package:pj1/voice/voice_recognition.dart';
-import 'package:pj1/voice/voiceRecording.dart';
-import 'package:pj1/voice/voiceScore.dart';
 import 'package:pj1/user/profile/profileHome.dart';
+import 'audio/audioRecognition.dart';
+import 'audio/nowRecord.dart';
 import 'userhome/userHome.dart';
-import 'package:pj1/voice/voiceRecord.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:pj1/notify/notice_screen.dart';
@@ -91,17 +89,13 @@ class SoriMoiApp extends StatelessWidget {
         '/recording': (context) => const RecordingHomeScreen(),
         '/findId': (context) => const FindIdScreen(),
         '/findPassword': (context) => const FindPasswordScreen(),
-        '/voice': (context) => const CombinedVoiceScreen(),
-        '/voiceRecognition': (context) => const CombinedVoiceScreen(),
         '/voiceText': (context) => const VoiceTextScreen(),
-        '/voiceRecording': (context) => const AnalyzingFeedbackScreen(),
-        '/scriptPractice': (context) => const ScriptPracticeScreen(),
         '/profileHome': (context) => const ProfileHome(),
-        '/voiceScore': (context) => const ScriptPracticeScreen(),
-        '/voiceRecord': (context) => const VoiceRecordScreen(),
         '/userLogin': (context) => const StartScreen(),
         '/notice': (context) => const NoticeScreen(),
         '/support': (context) => const SupportScreen(),
+        '/nowRecord': (context) => const NowRecordScreen(),
+        '/audioRecognition': (context) => const RecogAudio(),
       },
     );
   }
