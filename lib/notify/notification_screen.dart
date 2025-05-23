@@ -96,6 +96,7 @@ class NotificationScreen extends StatelessWidget {
                 '알림을 설정하면 중요한 학습 알림만 받아볼 수 있어요.\n'
                     '꾸준한 영어 연습을 돕고 학습 루틴을 유지해 줍니다!',
                 textAlign: TextAlign.center,
+
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const Spacer(),

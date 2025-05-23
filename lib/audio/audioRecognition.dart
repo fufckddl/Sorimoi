@@ -9,6 +9,7 @@ import 'package:record/record.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../breathingButton.dart';
 import 'resultScreen.dart';
+import 'analyzingAudioScreen.dart';
 
 class RecogAudio extends StatefulWidget {
   const RecogAudio({super.key});
@@ -143,7 +144,7 @@ class _RecogAudioState extends State<RecogAudio> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ResultScreen(
+          builder: (_) => AnalyzingFeedbackScreen(
             audioPath: audioPath!,
             transcript: allText.trim(),
           ),

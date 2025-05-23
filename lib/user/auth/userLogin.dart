@@ -30,7 +30,7 @@ class _StartScreenState extends State<StartScreen> {
           "password": pw,
         }),
       );
-
+      print("한글");
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
         final userId = data['user_id'];
