@@ -1,14 +1,14 @@
-// ✅ audioRecognition.dart - 실시간 STT + 직접 WAV 저장 (B안)
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../breathingButton.dart';
-import 'resultScreen.dart';
+import 'resultScreen.dart'; // ✅ 변경된 경로
 
 class RecogAudio extends StatefulWidget {
   const RecogAudio({super.key});
@@ -24,11 +24,16 @@ class _RecogAudioState extends State<RecogAudio> {
   List<int> pcmBytes = [];
   String? audioPath;
   bool isRecording = false;
-  Color borderColor = const Color(0xFF1E0E62);
 
   String tempText = '';
   String allText = '';
   Timer? finalTextTimer;
+
+  String feedbackText = '';
+  Color feedbackColor = const Color(0xFF1E0E62);
+
+  final List<double> _recentVolumes = [];
+  Timer? _feedbackTimer;
 
   @override
   void initState() {
@@ -51,7 +56,9 @@ class _RecogAudioState extends State<RecogAudio> {
     final dir = await getApplicationDocumentsDirectory();
     audioPath = '${dir.path}/my_recorded_audio.wav';
 
-    _channel = WebSocketChannel.connect(Uri.parse('ws://43.200.24.193:5000/ws/stt'));
+    _channel = WebSocketChannel.connect(
+      Uri.parse('ws://43.200.24.193:5000/ws/stt'),
+    );
     print("🔌 WebSocket 연결됨");
 
     _channel!.stream.listen(
@@ -82,6 +89,7 @@ class _RecogAudioState extends State<RecogAudio> {
     _recordSub = stream.listen((data) {
       _channel?.sink.add(base64Encode(data));
       pcmBytes.addAll(data);
+      _scheduleAnalyzeVolume(data);
     });
 
     setState(() => isRecording = true);
@@ -101,32 +109,64 @@ class _RecogAudioState extends State<RecogAudio> {
 
     setState(() {
       isRecording = false;
-      borderColor = const Color(0xffCE2C31);
+      feedbackColor = const Color(0xffCE2C31);
     });
 
-    _navigateToNextScreen();
+    _navigateToNextScreen(); // ✅ 바로 ResultScreen으로 이동
+  }
+
+  void _scheduleAnalyzeVolume(Uint8List data) {
+    if (_feedbackTimer?.isActive ?? false) return;
+    _feedbackTimer = Timer(const Duration(milliseconds: 200), () {
+      _analyzeVolume(data);
+    });
+  }
+
+  void _analyzeVolume(Uint8List data) {
+    final buffer = ByteData.sublistView(data);
+    double sum = 0;
+    for (int i = 0; i < buffer.lengthInBytes; i += 2) {
+      final sample = buffer.getInt16(i, Endian.little);
+      sum += sample * sample;
+    }
+
+    final rms = sqrt(sum / (buffer.lengthInBytes / 2));
+    _recentVolumes.add(rms);
+    if (_recentVolumes.length > 10) _recentVolumes.removeAt(0);
+
+    final avgRms = _recentVolumes.reduce((a, b) => a + b) / _recentVolumes.length;
+
+    setState(() {
+      if (avgRms < 500) {
+        feedbackText = '목소리가 너무 작아요 😪';
+        feedbackColor = Colors.red;
+      } else if (avgRms > 6000) {
+        feedbackText = '목소리가 너무 커요 😲';
+        feedbackColor = Colors.purple;
+      } else {
+        feedbackText = 'Good! 잘 하고 있어요! 😄👍';
+        feedbackColor = Colors.green;
+      }
+    });
   }
 
   List<int> _buildWavFile(List<int> pcmData, int sampleRate, int numChannels) {
-    const int byteRate = 16000 * 2 * 1; // sampleRate * bytesPerSample * channels
+    const int byteRate = 16000 * 2 * 1;
     final int dataLength = pcmData.length;
-    final int totalLength = 44 + dataLength;
-
-    final header = BytesBuilder();
-    header.add(ascii.encode('RIFF'));
-    header.add(_intToBytes(totalLength - 8, 4));
-    header.add(ascii.encode('WAVE'));
-    header.add(ascii.encode('fmt '));
-    header.add(_intToBytes(16, 4));
-    header.add(_intToBytes(1, 2)); // PCM format
-    header.add(_intToBytes(numChannels, 2));
-    header.add(_intToBytes(sampleRate, 4));
-    header.add(_intToBytes(byteRate, 4));
-    header.add(_intToBytes(2 * numChannels, 2)); // block align
-    header.add(_intToBytes(16, 2)); // bits per sample
-    header.add(ascii.encode('data'));
-    header.add(_intToBytes(dataLength, 4));
-
+    final header = BytesBuilder()
+      ..add(ascii.encode('RIFF'))
+      ..add(_intToBytes(44 + dataLength - 8, 4))
+      ..add(ascii.encode('WAVE'))
+      ..add(ascii.encode('fmt '))
+      ..add(_intToBytes(16, 4))
+      ..add(_intToBytes(1, 2))
+      ..add(_intToBytes(numChannels, 2))
+      ..add(_intToBytes(sampleRate, 4))
+      ..add(_intToBytes(byteRate, 4))
+      ..add(_intToBytes(2 * numChannels, 2))
+      ..add(_intToBytes(16, 2))
+      ..add(ascii.encode('data'))
+      ..add(_intToBytes(dataLength, 4));
     return [...header.toBytes(), ...pcmData];
   }
 
@@ -146,10 +186,27 @@ class _RecogAudioState extends State<RecogAudio> {
           builder: (_) => ResultScreen(
             audioPath: audioPath!,
             transcript: allText.trim(),
+            score: 0,            // 아직 채점 전이므로 0
+            feedback: '',        // 아직 채점 전
           ),
         ),
       );
     }
+  }
+
+  Future<bool> _showExitDialog() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('음성 인식을 종료하시겠습니까?'),
+        content: const Text('변경 사항이 저장되지 않습니다.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('아니요')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('예')),
+        ],
+      ),
+    );
+    return shouldExit ?? false;
   }
 
   @override
@@ -157,6 +214,7 @@ class _RecogAudioState extends State<RecogAudio> {
     _recorder.dispose();
     _channel?.sink.close();
     _recordSub?.cancel();
+    _feedbackTimer?.cancel();
     finalTextTimer?.cancel();
     super.dispose();
   }
@@ -164,25 +222,37 @@ class _RecogAudioState extends State<RecogAudio> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // ← 명시해주는 것이 좋음
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('음성 인식'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // 뒤로가기 직접 수행
+          onPressed: () async {
+            if (await _showExitDialog()) {
+              await _recordSub?.cancel();
+              await _recorder.stop();
+              _channel?.sink.close();
+              finalTextTimer?.cancel();
+              _feedbackTimer?.cancel();
+              Navigator.pop(context);
+            }
           },
         ),
       ),
       body: Column(
         children: [
-          const SizedBox(height: 100),
+          const SizedBox(height: 40),
+          Text(
+            feedbackText,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
           SizedBox(
             height: 200,
             child: Center(
               child: BreathingButton(
                 onPressed: _toggleRecording,
-                borderColor: borderColor,
+                borderColor: feedbackColor,
                 size: 180.0,
               ),
             ),

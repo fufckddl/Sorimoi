@@ -1,5 +1,3 @@
-//음성인식 버튼1
-
 import 'package:flutter/material.dart';
 
 class BreathingButton extends StatefulWidget {
@@ -31,17 +29,17 @@ class _BreathingButtonState extends State<BreathingButton>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000), // 더 빠르고 부드럽게
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
     _animation = Tween<double>(
       begin: startSize,
-      end: startSize + 10.0, // 더 subtle한 숨쉬기
+      end: startSize + 10.0,
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeInOut, // 부드러운 전환
+        curve: Curves.easeInOut,
       ),
     );
 
@@ -53,6 +51,8 @@ class _BreathingButtonState extends State<BreathingButton>
   @override
   void didUpdateWidget(covariant BreathingButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // 애니메이션 상태 변경 감지
     if (widget.animate && !_controller.isAnimating) {
       _controller.repeat(reverse: true);
     } else if (!widget.animate && _controller.isAnimating) {
@@ -80,7 +80,10 @@ class _BreathingButtonState extends State<BreathingButton>
             height: widget.animate ? _animation.value : startSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: widget.borderColor, width: 30),
+              border: Border.all(
+                color: widget.borderColor, // 실시간 색상 반영
+                width: 30,
+              ),
             ),
           );
         },
