@@ -1,37 +1,95 @@
-// audio/recording_model.dart
+import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'audioRecognition.dart';
 
-class Recording {
-  final String id;
-  final String audioUrl;
+class ResultScoreScreen extends StatefulWidget {
+  final String audioPath;
   final String transcript;
-  final String filename;
-  final DateTime createdAt;
+  final int score;
+  final String feedback;
 
-  Recording({
-    required this.id,
-    required this.audioUrl,
+  const ResultScoreScreen({
+    super.key,
+    required this.audioPath,
     required this.transcript,
-    required this.filename,
-    required this.createdAt,
+    required this.score,
+    required this.feedback,
   });
 
-  factory Recording.fromJson(Map<String, dynamic> json) {
-    return Recording(
-      id: json['id'] ?? '',
-      audioUrl: json['audio_url'] ?? '',
-      transcript: json['transcript'] ?? '',
-      filename: json['filename'] ?? '',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
-    );
+  @override
+  State<ResultScoreScreen> createState() => _ResultScoreScreenState();
+}
+
+class _ResultScoreScreenState extends State<ResultScoreScreen> {
+  final AudioPlayer _player = AudioPlayer();
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'audio_url': audioUrl,
-      'transcript': transcript,
-      'filename': filename,
-      'created_at': createdAt.toIso8601String(),
-    };
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('결과 확인')),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, // ✅ 중요
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48),
+            child: Column(
+              children: [
+                Text(
+                  '💯 ${widget.score}점',
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  '🗣️ ${widget.feedback}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          // ✅ 하단 버튼
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RecogAudio()),
+                    );
+                  },
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('다시하기'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  },
+                  icon: const Icon(Icons.home),
+                  label: const Text('메인으로 돌아가기'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
