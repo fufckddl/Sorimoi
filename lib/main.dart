@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart'; // 🔑 키 해시 출력을 위해 추가
+import 'package:pj1/audio/practice.dart';
 
 // 📁 화면 import
 import 'package:pj1/home/loadingScreen.dart';
@@ -96,6 +97,7 @@ class SoriMoiApp extends StatelessWidget {
         '/support': (context) => const SupportScreen(),
         '/nowRecord': (context) => const NowRecordScreen(),
         '/audioRecognition': (context) => const RecogAudio(),
+        '/practice': (context) => const PracticeScreen(),
       },
     );
   }
