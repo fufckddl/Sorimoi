@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(width: 10), // 버튼 간 간격
 
-                  // ▶️ 연습하기 버튼
+                  // 연습하기 버튼
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: 1,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushNamed(context, '/voice');
+            Navigator.pushNamed(context, '/practice');
           } else if (index == 2) {
             Navigator.pushNamed(context, '/profileHome');
           }
