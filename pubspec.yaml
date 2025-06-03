@@ -49,6 +49,7 @@ dependencies:
   record: ^6.0.0
   permission_handler: ^11.0.1
   web_socket_channel: ^3.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -73,7 +74,7 @@ flutter:
     - assets/email_icon.png
     - assets/apple_icon.png
     - assets/sori_icon2.png
-    - assets/hamster.png
+    - assets/sentences.json
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

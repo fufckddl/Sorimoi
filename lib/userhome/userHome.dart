@@ -97,41 +97,87 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Center(
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/recording');
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9C7F2),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.mic, size: 18, color: Colors.white),
-                          SizedBox(width: 6),
-                          Text(
-                            '오늘의 소리',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+              child: Row(
+                children: [
+                  // ▶️ 오늘의 소리 버튼
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/recording');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD9C7F2),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.mic, size: 18, color: Colors.white),
+                                SizedBox(width: 6),
+                                Text(
+                                  '오늘의 소리',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+
+                  const SizedBox(width: 10), // 버튼 간 간격
+
+                  // ▶️ 연습하기 버튼
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/practice'); // 원하는 경로로 수정
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD9C7F2),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.school, size: 18, color: Colors.white),
+                                SizedBox(width: 6),
+                                Text(
+                                  '연습하기',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
             const SizedBox(height: 24),
             const Text("출석 체크", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
