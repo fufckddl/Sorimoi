@@ -153,7 +153,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
               children: [
                 ElevatedButton.icon(
                   icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  label: Text(_isRecording ? "녹음 종료" : "말하기 시작"),
+                  label: Text(_isRecording ? "연습 종료" : "연습 시작"),
                   onPressed: _isRecording ? _stopRecordingAndSend : _startRecording,
                 ),
                 ElevatedButton(
