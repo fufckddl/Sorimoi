@@ -177,7 +177,7 @@ class _StartScreenState extends State<StartScreen> {
                         onChanged: (value) => setState(() => _saveId = value!),
                       ),
                       const Text('아이디 저장'),
-                      const Spacer(),
+                      //const Spacer(), //로그인 공백
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/findId'),
                         child: const Text('아이디 찾기'),

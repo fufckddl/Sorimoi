@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pj1/calendar/calendarPopup.dart';
@@ -7,6 +6,7 @@ import 'package:pj1/user/auth/userLogin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pj1/common/app_drawer.dart';
 import 'package:pj1/common/custom_appbar.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -37,7 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -59,172 +58,172 @@ class _HomeScreenState extends State<HomeScreen> {
         title: '홈',
         showBack: false,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.star, size: 18, color: Colors.purple),
-                  const SizedBox(width: 6),
-                  Text(
-                    "${_userName!}님, 오늘도 오셨군요!",
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.star, size: 18, color: Colors.purple),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Center(
-              child: Text(
-                "오늘도 멋진 발음 연습을 시작해봐요",
-                style: const TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: const [
-                Text("음성 녹음 바로가기", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                Spacer(),
-                Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black45),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Row(
-                children: [
-                  // ▶️ 오늘의 소리 버튼
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/recording');
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9C7F2),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.mic, size: 18, color: Colors.white),
-                                SizedBox(width: 6),
-                                Text(
-                                  '오늘의 소리',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 10), // 버튼 간 간격
-
-                  // 연습하기 버튼
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/practice'); // 원하는 경로로 수정
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9C7F2),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.school, size: 18, color: Colors.white),
-                                SizedBox(width: 6),
-                                Text(
-                                  '연습하기',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            const Text("출석 체크", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: ['월', '화', '수', '목', '금', '토', '일']
-                  .map((day) => GestureDetector(
-                onTap: () {
-                  openAttendanceSheet(context);
-                },
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: ['화', '수', '목'].contains(day)
-                            ? Colors.purple
-                            : Colors.white,
-                        border: Border.all(
-                          color: ['화', '수', '목'].contains(day)
-                              ? Colors.purple
-                              : Colors.grey,
-                        ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.star, size: 18, color: Colors.purple),
+                          const SizedBox(width: 6),
+                          Text(
+                            "${_userName!}님, 오늘도 오셨군요!",
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.star, size: 18, color: Colors.purple),
+                        ],
                       ),
-                      child: const Icon(Icons.check, size: 14, color: Colors.white),
                     ),
-                    const SizedBox(height: 2),
-                    Text(day, style: const TextStyle(fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: Text(
+                        "오늘도 멋진 발음 연습을 시작해봐요",
+                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: const [
+                        Text("음성 녹음 바로가기", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                        Spacer(),
+                        Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black45),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/recording');
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD9C7F2),
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.mic, size: 18, color: Colors.white),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          '오늘의 소리',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/practice');
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD9C7F2),
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.school, size: 18, color: Colors.white),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          '연습하기',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text("출석 체크", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: ['월', '화', '수', '목', '금', '토', '일']
+                          .map((day) => GestureDetector(
+                        onTap: () {
+                          openAttendanceSheet(context);
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: ['화', '수', '목'].contains(day)
+                                    ? Colors.purple
+                                    : Colors.white,
+                                border: Border.all(
+                                  color: ['화', '수', '목'].contains(day)
+                                      ? Colors.purple
+                                      : Colors.grey,
+                                ),
+                              ),
+                              child: const Icon(Icons.check, size: 14, color: Colors.white),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(day, style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                      ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text("학습 기록", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    _recordCard("2025-04-22 녹음", "87", Colors.green, "2025-04-22"),
+                    const SizedBox(height: 12),
                   ],
                 ),
-              ))
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-            const Text("학습 기록", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView(
-                children: [
-                  _recordCard("2025-04-22 녹음", "87", Colors.green, "2025-04-22"),
-                ],
               ),
             ),
-            const SizedBox(height: 4),
-            SingleChildScrollView(
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Align(
                 alignment: Alignment.center,
@@ -242,8 +241,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.black,
