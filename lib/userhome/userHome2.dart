@@ -177,29 +177,31 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
         title: const Text('카테고리를 선택하세요'),
         content: SizedBox(
           width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ✅ 기존 카테고리 목록
-              ...categoryList.map((category) => ListTile(
-                title: Text(category['categoryName']),
-                onTap: () {
-                  Navigator.pop(context); // 닫고
-                  _showFileTitleDialog(context, category['categoryName'], category['id']);
-                },
-              )),
-              const Divider(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ✅ 기존 카테고리 목록
+                ...categoryList.map((category) => ListTile(
+                  title: Text(category['categoryName']),
+                  onTap: () {
+                    Navigator.pop(context); // 닫고
+                    _showFileTitleDialog(context, category['categoryName'], category['id']);
+                  },
+                )),
+                const Divider(),
 
-              // ✅ 새 카테고리 만들기 버튼
-              ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text('새 카테고리 만들기'),
-                onTap: () {
-                  Navigator.pop(context); // 닫고
-                  _showCreateNewCategoryDialog(context); // 새 카테고리 입력창 띄움
-                },
-              ),
-            ],
+                // ✅ 새 카테고리 만들기 버튼
+                ListTile(
+                  leading: const Icon(Icons.add),
+                  title: const Text('새 카테고리 만들기'),
+                  onTap: () {
+                    Navigator.pop(context); // 닫고
+                    _showCreateNewCategoryDialog(context); // 새 카테고리 입력창 띄움
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
