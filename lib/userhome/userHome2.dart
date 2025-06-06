@@ -93,7 +93,6 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
         body: jsonEncode({'star': newStar}),
       );
     } catch (e) {
-      // 실패 시 롤백 가능 (선택)
       setState(() {
         scripts[index]['star'] = currentStar;
         scriptData[categoryName] = List.from(scripts);
@@ -181,23 +180,20 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ✅ 기존 카테고리 목록
                 ...categoryList.map((category) => ListTile(
                   title: Text(category['categoryName']),
                   onTap: () {
-                    Navigator.pop(context); // 닫고
+                    Navigator.pop(context);
                     _showFileTitleDialog(context, category['categoryName'], category['id']);
                   },
                 )),
                 const Divider(),
-
-                // ✅ 새 카테고리 만들기 버튼
                 ListTile(
                   leading: const Icon(Icons.add),
                   title: const Text('새 카테고리 만들기'),
                   onTap: () {
-                    Navigator.pop(context); // 닫고
-                    _showCreateNewCategoryDialog(context); // 새 카테고리 입력창 띄움
+                    Navigator.pop(context);
+                    _showCreateNewCategoryDialog(context);
                   },
                 ),
               ],
@@ -223,8 +219,8 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
               if (name.isNotEmpty) {
                 final categoryId = await _saveCategoryToServer(name);
                 if (categoryId != null) {
-                  Navigator.pop(context); // 새 카테고리 창 닫고
-                  _showFileTitleDialog(context, name, categoryId); // 파일 제목 입력
+                  Navigator.pop(context);
+                  _showFileTitleDialog(context, name, categoryId);
                 }
               }
             },
@@ -318,9 +314,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
                   child: Text(
                     '${script['score']}점',
                     style: TextStyle(
-                      color: script['score'] >= 80
-                          ? Colors.green
-                          : Colors.red,
+                      color: script['score'] >= 80 ? Colors.green : Colors.red,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -367,6 +361,12 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
               ),
               child: Column(
                 children: [
+                  Image.asset(
+                    'assets/mic.png',
+                    width: 80,
+                    height: 80,
+                  ),
+                  const SizedBox(height: 16),
                   const Text('오늘의 소리를 녹음해보세요!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   const Text('카테고리를 선택하여 시작하세요', style: TextStyle(fontSize: 13, color: Colors.grey)),
