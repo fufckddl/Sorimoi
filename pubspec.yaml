@@ -78,6 +78,8 @@ flutter:
     - assets/apple_icon.png
     - assets/sori_icon2.png
     - assets/sentences.json
+    - assets/mike.png
+    - assets/mic.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

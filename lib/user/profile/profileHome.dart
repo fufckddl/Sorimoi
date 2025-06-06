@@ -85,7 +85,7 @@ class _ProfileHomeState extends State<ProfileHome> {
         currentIndex: 2,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushNamed(context, '/voiceRecognition');
+            Navigator.pushNamed(context, '/practice');
           } else if (index == 1) {
             Navigator.pushNamed(context, '/home');
           } else if (index == 2) {
