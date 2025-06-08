@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'package:pj1/common/app_drawer.dart';
 import 'package:pj1/common/custom_appbar.dart';
-//추가
+
 class ProfileHome extends StatefulWidget {
   const ProfileHome({super.key});
 
@@ -11,6 +14,52 @@ class ProfileHome extends StatefulWidget {
 
 class _ProfileHomeState extends State<ProfileHome> {
   String nickname = 'abcd1234';
+  String userName = '';
+  String phone = '';
+  String email = '';
+  int userId = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    userId = prefs.getInt('userId') ?? -1;
+
+    // 닉네임은 유저별 키로 관리
+    final nicknameKey = 'nickname_$userId';
+    final nicknameLocal = prefs.getString(nicknameKey) ?? 'abcd1234';
+
+    setState(() {
+      nickname = nicknameLocal;
+    });
+
+    final url = Uri.parse('http://43.200.24.193:5000/user/profile?user_id=$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          userName = data['name'] ?? '';
+          phone = data['phone'] ?? '';
+          email = data['email'] ?? '';
+        });
+      } else {
+        debugPrint("❌ 프로필 조회 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("❌ 프로필 요청 에러: $e");
+    }
+  }
+
+  Future<void> _saveNickname(String newNickname) async {
+    final prefs = await SharedPreferences.getInstance();
+    final nicknameKey = 'nickname_$userId';
+    await prefs.setString(nicknameKey, newNickname);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +67,7 @@ class _ProfileHomeState extends State<ProfileHome> {
       backgroundColor: Colors.white,
       endDrawer: const AppDrawer(),
       appBar: const CustomAppBar(
-        title: '나의정보',
+        title: '마이페이지',
         showBack: true,
       ),
       body: SingleChildScrollView(
@@ -60,10 +109,9 @@ class _ProfileHomeState extends State<ProfileHome> {
               const Divider(thickness: 1),
               const SizedBox(height: 16),
               _buildProfileRow('닉네임', nickname),
-              _buildProfileRow('이름', '홍길동'),
-              _buildProfileRow('휴대폰 번호', '010-xxxx-5678'),
-              _buildProfileRow('대표 이메일', 'abcde@naver.com'),
-              _buildProfileRow('가입일', '2024.04.05'),
+              _buildProfileRow('이름', userName),
+              _buildProfileRow('휴대폰 번호', phone),
+              _buildProfileRow('E-mail', email),
               const SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -103,7 +151,7 @@ class _ProfileHomeState extends State<ProfileHome> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: '프로필',
+            label: '마이페이지',
           ),
         ],
       ),
@@ -163,9 +211,11 @@ class _ProfileHomeState extends State<ProfileHome> {
             child: const Text('취소'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final newNickname = controller.text.trim();
+              await _saveNickname(newNickname);
               setState(() {
-                nickname = controller.text.trim();
+                nickname = newNickname;
               });
               Navigator.pop(context);
             },
@@ -191,7 +241,7 @@ class _ProfileHomeState extends State<ProfileHome> {
             onPressed: () {
               Navigator.pop(context);
               Navigator.pushReplacementNamed(context, '/userLogin');
-              // TODO: 서버 회원 탈퇴 API 호출 로직 추가 가능
+              // TODO: 회원 탈퇴 API 연결
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('예', style: TextStyle(color: Colors.white)),

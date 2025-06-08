@@ -56,7 +56,7 @@ class NoticeScreen extends StatelessWidget {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: '프로필',
+            label: '마이페이지',
           ),
         ],
       ),

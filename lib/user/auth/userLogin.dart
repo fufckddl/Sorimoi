@@ -16,7 +16,6 @@ class _StartScreenState extends State<StartScreen> {
   final TextEditingController _pwController = TextEditingController();
   bool _saveId = false;
 
-  // ✅ 일반 로그인
   Future<void> _login() async {
     final id = _idController.text.trim();
     final pw = _pwController.text.trim();
@@ -30,15 +29,20 @@ class _StartScreenState extends State<StartScreen> {
           "password": pw,
         }),
       );
-      print("한글");
+
       final data = jsonDecode(response.body);
+
       if (response.statusCode == 200 && data['success'] == true) {
         final userId = data['user_id'];
         final userName = data['user_name'] ?? '';
+        final phone = data['phone'] ?? '';
+        final email = data['email'] ?? '';
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('userId', userId);
         await prefs.setString('userName', userName);
+        await prefs.setString('phone', phone);
+        await prefs.setString('email', email);
 
         await _markAttendance(userId.toString());
 
@@ -55,7 +59,6 @@ class _StartScreenState extends State<StartScreen> {
     }
   }
 
-  // ✅ 출석 체크
   Future<void> _markAttendance(String userId) async {
     final today = DateTime.now().toIso8601String().split('T').first;
     final url = Uri.parse('http://43.200.24.193:5000/attendance/check');
@@ -80,7 +83,6 @@ class _StartScreenState extends State<StartScreen> {
     }
   }
 
-  // ✅ 카카오 로그인 연동
   Future<void> _kakaoLogin() async {
     try {
       bool installed = await isKakaoTalkInstalled();
@@ -177,7 +179,6 @@ class _StartScreenState extends State<StartScreen> {
                         onChanged: (value) => setState(() => _saveId = value!),
                       ),
                       const Text('아이디 저장'),
-                      //const Spacer(), //로그인 공백
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/findId'),
                         child: const Text('아이디 찾기'),
@@ -201,10 +202,10 @@ class _StartScreenState extends State<StartScreen> {
                   const Divider(),
                   const Text('다른 방법으로 로그인 하기'),
                   const SizedBox(height: 12),
-                  _socialLoginButton('카카오 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
-                  _socialLoginButton('Google 로그인', Colors.grey, Icons.g_mobiledata, () {}),
-                  _socialLoginButton('이메일 로그인', Colors.lightBlue, Icons.email, () {}),
-                  _socialLoginButton('Apple 로그인', Colors.black, Icons.apple, () {}),
+
+                  _socialLoginButton('카카오 계정으로 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
+                  _socialLoginButton('Google 계정으로 로그인', Colors.grey, Icons.g_mobiledata, () {}),
+
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -213,7 +214,7 @@ class _StartScreenState extends State<StartScreen> {
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/signup'),
                         child: const Text(
-                          '가입하기',
+                          '회원가입',
                           style: TextStyle(color: Colors.purple),
                         ),
                       ),
