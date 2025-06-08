@@ -29,7 +29,6 @@ class _ProfileHomeState extends State<ProfileHome> {
     final prefs = await SharedPreferences.getInstance();
     userId = prefs.getInt('userId') ?? -1;
 
-    // 닉네임은 유저별 키로 관리
     final nicknameKey = 'nickname_$userId';
     final nicknameLocal = prefs.getString(nicknameKey) ?? 'abcd1234';
 
@@ -117,7 +116,7 @@ class _ProfileHomeState extends State<ProfileHome> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildOutlinedButton(context, '로그아웃', Colors.red, () {
-                    Navigator.pushReplacementNamed(context, '/userLogin');
+                    _showLogoutDialog(context);
                   }),
                   _buildOutlinedButton(context, '회원 탈퇴', Colors.red, () {
                     _showDeleteAccountDialog(context);
@@ -220,6 +219,48 @@ class _ProfileHomeState extends State<ProfileHome> {
               Navigator.pop(context);
             },
             child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('아니오'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              final currentUserId = prefs.getInt('userId');
+
+              if (currentUserId != null) {
+                final nicknameKey = 'nickname_$currentUserId';
+                final savedNickname = prefs.getString(nicknameKey);
+
+                await prefs.remove('userId');
+                await prefs.remove('userName');
+                await prefs.remove('email');
+                await prefs.remove('phone');
+
+                if (savedNickname != null) {
+                  await prefs.setString(nicknameKey, savedNickname);
+                }
+              }
+
+              if (!mounted) return;
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/userLogin');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('예', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
