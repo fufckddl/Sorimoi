@@ -258,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.record_voice_over), label: '연습하기'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '마이페이지'),
         ],
       ),
     );
