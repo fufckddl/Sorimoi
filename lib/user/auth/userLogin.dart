@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pj1/config/app_config.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -22,12 +23,9 @@ class _StartScreenState extends State<StartScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://your-api-host:5000/login'),
+        AppConfig.apiUri('/login'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": id,
-          "password": pw,
-        }),
+        body: jsonEncode({"username": id, "password": pw}),
       );
 
       final data = jsonDecode(response.body);
@@ -47,9 +45,9 @@ class _StartScreenState extends State<StartScreen> {
         await _markAttendance(userId.toString());
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'])),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(data['message'])));
         Navigator.pushReplacementNamed(context, '/notification');
       } else {
         _showError(data['message'] ?? '서버 오류');
@@ -61,16 +59,13 @@ class _StartScreenState extends State<StartScreen> {
 
   Future<void> _markAttendance(String userId) async {
     final today = DateTime.now().toIso8601String().split('T').first;
-    final url = Uri.parse('http://your-api-host:5000/attendance/check');
+    final url = AppConfig.apiUri('/attendance/check');
 
     try {
       final res = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "user_id": userId,
-          "date": today,
-        }),
+        body: jsonEncode({"user_id": userId, "date": today}),
       );
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
@@ -94,16 +89,16 @@ class _StartScreenState extends State<StartScreen> {
       final kakaoEmail = user.kakaoAccount?.email ?? '이메일 없음';
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('카카오 로그인 성공: $kakaoEmail')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('카카오 로그인 성공: $kakaoEmail')));
 
       Navigator.pushReplacementNamed(context, '/notification');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('카카오 로그인 실패: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('카카오 로그인 실패: $error')));
     }
   }
 
@@ -117,7 +112,7 @@ class _StartScreenState extends State<StartScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('확인'),
-          )
+          ),
         ],
       ),
     );
@@ -135,10 +130,7 @@ class _StartScreenState extends State<StartScreen> {
             left: 0,
             right: 0,
             child: Center(
-              child: Image.asset(
-                'assets/sori_icon.png',
-                width: 80,
-              ),
+              child: Image.asset('assets/sori_icon.png', width: 80),
             ),
           ),
           Container(
@@ -180,11 +172,13 @@ class _StartScreenState extends State<StartScreen> {
                       ),
                       const Text('아이디 저장'),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/findId'),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/findId'),
                         child: const Text('아이디 찾기'),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/findPassword'),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/findPassword'),
                         child: const Text('비밀번호 찾기'),
                       ),
                     ],
@@ -203,8 +197,18 @@ class _StartScreenState extends State<StartScreen> {
                   const Text('다른 방법으로 로그인 하기'),
                   const SizedBox(height: 12),
 
-                  _socialLoginButton('카카오 계정으로 로그인', Colors.yellow, Icons.chat, _kakaoLogin),
-                  _socialLoginButton('Google 계정으로 로그인', Colors.grey, Icons.g_mobiledata, () {}),
+                  _socialLoginButton(
+                    '카카오 계정으로 로그인',
+                    Colors.yellow,
+                    Icons.chat,
+                    _kakaoLogin,
+                  ),
+                  _socialLoginButton(
+                    'Google 계정으로 로그인',
+                    Colors.grey,
+                    Icons.g_mobiledata,
+                    () {},
+                  ),
 
                   const SizedBox(height: 20),
                   Row(
@@ -212,7 +216,8 @@ class _StartScreenState extends State<StartScreen> {
                     children: [
                       const Text('소리모이 계정이 없으신가요?'),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/signup'),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/signup'),
                         child: const Text(
                           '회원가입',
                           style: TextStyle(color: Colors.purple),
@@ -229,7 +234,12 @@ class _StartScreenState extends State<StartScreen> {
     );
   }
 
-  Widget _socialLoginButton(String text, Color? color, IconData icon, VoidCallback onPressed) {
+  Widget _socialLoginButton(
+    String text,
+    Color? color,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       width: double.infinity,
@@ -238,9 +248,7 @@ class _StartScreenState extends State<StartScreen> {
         onPressed: onPressed,
         icon: Icon(icon, color: Colors.black),
         label: Text(text, style: const TextStyle(color: Colors.black)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-        ),
+        style: ElevatedButton.styleFrom(backgroundColor: color),
       ),
     );
   }

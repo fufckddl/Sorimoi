@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:pj1/config/app_config.dart';
 import 'resultScoreScreen.dart';
 
 class AnalyzingFeedbackScreen extends StatefulWidget {
@@ -15,7 +16,8 @@ class AnalyzingFeedbackScreen extends StatefulWidget {
   });
 
   @override
-  State<AnalyzingFeedbackScreen> createState() => _AnalyzingFeedbackScreenState();
+  State<AnalyzingFeedbackScreen> createState() =>
+      _AnalyzingFeedbackScreenState();
 }
 
 class _AnalyzingFeedbackScreenState extends State<AnalyzingFeedbackScreen> {
@@ -51,10 +53,12 @@ class _AnalyzingFeedbackScreenState extends State<AnalyzingFeedbackScreen> {
 
   Future<void> _fetchScore() async {
     try {
-      final uri = Uri.parse('http://your-api-host:8000/score');
+      final uri = AppConfig.scoreUri('/score');
       final request = http.MultipartRequest('POST', uri)
         ..fields['transcript'] = widget.transcript
-        ..files.add(await http.MultipartFile.fromPath('audio', widget.audioPath));
+        ..files.add(
+          await http.MultipartFile.fromPath('audio', widget.audioPath),
+        );
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);

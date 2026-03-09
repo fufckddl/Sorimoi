@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pj1/config/app_config.dart';
 
 import 'calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 로그인 후 받은 [userId]를 전달받아 출석 시트를 열어주는 함수
 Future<void> openAttendanceSheet(BuildContext context) async {
-
   // SharedPreferences 에서 userId 불러오기
   final prefs = await SharedPreferences.getInstance();
   final int userId = prefs.getInt('userId')!;
 
   Future<Set<DateTime>> fetchAttendanceDates(int userId) async {
-    final url = Uri.parse('http://your-api-host:5000/attendance/$userId');
+    final url = AppConfig.apiUri('/attendance/$userId');
     final response = await http.get(url);
     print('fetchAttendanceDates called with userId: $userId');
     if (response.statusCode == 200) {
@@ -55,7 +55,9 @@ Future<void> openAttendanceSheet(BuildContext context) async {
 
               final allDates = snap.data!;
               final today = DateTime.now();
-              final monthDates = allDates.where((d) => d.year == today.year && d.month == today.month).toSet();
+              final monthDates = allDates
+                  .where((d) => d.year == today.year && d.month == today.month)
+                  .toSet();
               final totalAttended = monthDates.length;
 
               int consecutive = 0;
@@ -65,7 +67,9 @@ Future<void> openAttendanceSheet(BuildContext context) async {
                 checkDay = checkDay.subtract(const Duration(days: 1));
               }
 
-              final rate = today.day > 0 ? (totalAttended / today.day * 100) : 0;
+              final rate = today.day > 0
+                  ? (totalAttended / today.day * 100)
+                  : 0;
 
               return SingleChildScrollView(
                 controller: scrollController, // <- 중요!
@@ -112,7 +116,10 @@ Future<void> openAttendanceSheet(BuildContext context) async {
 Widget _statBox(String label, String value) {
   return Column(
     children: [
-      Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+      Text(
+        value,
+        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      ),
       const SizedBox(height: 4),
       Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
     ],

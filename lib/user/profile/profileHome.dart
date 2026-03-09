@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:pj1/common/app_drawer.dart';
 import 'package:pj1/common/custom_appbar.dart';
+import 'package:pj1/config/app_config.dart';
 
 class ProfileHome extends StatefulWidget {
   const ProfileHome({super.key});
@@ -36,7 +37,7 @@ class _ProfileHomeState extends State<ProfileHome> {
       nickname = nicknameLocal;
     });
 
-    final url = Uri.parse('http://your-api-host:5000/user/profile?user_id=$userId');
+    final url = AppConfig.apiUri('/user/profile?user_id=$userId');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -65,10 +66,7 @@ class _ProfileHomeState extends State<ProfileHome> {
     return Scaffold(
       backgroundColor: Colors.white,
       endDrawer: const AppDrawer(),
-      appBar: const CustomAppBar(
-        title: '마이페이지',
-        showBack: true,
-      ),
+      appBar: const CustomAppBar(title: '마이페이지', showBack: true),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -78,11 +76,7 @@ class _ProfileHomeState extends State<ProfileHome> {
               Center(
                 child: Column(
                   children: [
-                    Image.asset(
-                      'assets/hamster.png',
-                      width: 100,
-                      height: 100,
-                    ),
+                    Image.asset('assets/hamster.png', width: 100, height: 100),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -144,14 +138,8 @@ class _ProfileHomeState extends State<ProfileHome> {
             icon: Icon(Icons.record_voice_over),
             label: '연습하기',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '마이페이지',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '마이페이지'),
         ],
       ),
     );
@@ -161,8 +149,10 @@ class _ProfileHomeState extends State<ProfileHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
         const SizedBox(height: 4),
         Container(
           width: double.infinity,
@@ -180,17 +170,18 @@ class _ProfileHomeState extends State<ProfileHome> {
   }
 
   Widget _buildOutlinedButton(
-      BuildContext context, String text, Color color, VoidCallback onPressed) {
+    BuildContext context,
+    String text,
+    Color color,
+    VoidCallback onPressed,
+  ) {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         side: BorderSide(color: color),
       ),
-      child: Text(
-        text,
-        style: TextStyle(color: color),
-      ),
+      child: Text(text, style: TextStyle(color: color)),
     );
   }
 

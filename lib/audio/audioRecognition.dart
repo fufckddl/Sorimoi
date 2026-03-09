@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:pj1/config/app_config.dart';
 import '../breathingButton.dart';
 import 'resultScreen.dart'; // ✅ 변경된 경로
 
@@ -56,13 +57,11 @@ class _RecogAudioState extends State<RecogAudio> {
     final dir = await getApplicationDocumentsDirectory();
     audioPath = '${dir.path}/my_recorded_audio.wav';
 
-    _channel = WebSocketChannel.connect(
-      Uri.parse('ws://your-api-host:5000/ws/stt'),
-    );
+    _channel = WebSocketChannel.connect(AppConfig.websocketUri('/ws/stt'));
     print("🔌 WebSocket 연결됨");
 
     _channel!.stream.listen(
-          (message) {
+      (message) {
         print("📥 STT 응답: $message");
         setState(() => tempText = message);
         finalTextTimer?.cancel();
@@ -134,7 +133,8 @@ class _RecogAudioState extends State<RecogAudio> {
     _recentVolumes.add(rms);
     if (_recentVolumes.length > 10) _recentVolumes.removeAt(0);
 
-    final avgRms = _recentVolumes.reduce((a, b) => a + b) / _recentVolumes.length;
+    final avgRms =
+        _recentVolumes.reduce((a, b) => a + b) / _recentVolumes.length;
 
     setState(() {
       if (avgRms < 500) {
@@ -186,8 +186,8 @@ class _RecogAudioState extends State<RecogAudio> {
           builder: (_) => ResultScreen(
             audioPath: audioPath!,
             transcript: allText.trim(),
-            score: 0,            // 아직 채점 전이므로 0
-            feedback: '',        // 아직 채점 전
+            score: 0, // 아직 채점 전이므로 0
+            feedback: '', // 아직 채점 전
           ),
         ),
       );
@@ -201,8 +201,14 @@ class _RecogAudioState extends State<RecogAudio> {
         title: const Text('음성 인식을 종료하시겠습니까?'),
         content: const Text('변경 사항이 저장되지 않습니다.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('아니요')),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('예')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('아니요'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('예'),
+          ),
         ],
       ),
     );

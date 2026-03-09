@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mysql_client/mysql_client.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:kakao_flutter_sdk_common/kakao_flutter_sdk_common.dart'; // 🔑 키 해시 출력을 위해 추가
 import 'package:pj1/audio/practice.dart';
+import 'package:pj1/config/app_config.dart';
 
 // 📁 화면 import
 import 'package:pj1/home/loadingScreen.dart';
@@ -23,40 +23,21 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:pj1/notify/notice_screen.dart';
 import 'package:pj1/support/support_screen.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Kakao SDK 초기화
-  KakaoSdk.init(nativeAppKey: 'your-kakao-native-app-key');
+  if (AppConfig.kakaoNativeAppKey.isNotEmpty) {
+    KakaoSdk.init(nativeAppKey: AppConfig.kakaoNativeAppKey);
 
-  // 🔑 현재 실행 중인 키 해시 출력
-  final keyHash = await KakaoSdk.origin;
-  print('🔑 현재 실행 중인 키 해시: $keyHash');
-
-  await dbConnector();
-  runApp(const SoriMoiApp());
-}
-
-// ✅ MySQL 연결
-Future<void> dbConnector() async {
-  print("Connecting to mysql server...");
-
-  try {
-    final conn = await MySQLConnection.createConnection(
-      host: 'your-api-host',
-      port: 3306,
-      userName: 'your-db-user',
-      password: 'your-database-password',
-      databaseName: 'your-db-name',
-    );
-
-    await conn.connect();
-    print("✅ MySQL 연결 성공");
-    await conn.close();
-  } catch (e) {
-    print("❌ MySQL 연결 실패: $e");
+    // 🔑 현재 실행 중인 키 해시 출력
+    final keyHash = await KakaoSdk.origin;
+    print('🔑 현재 실행 중인 키 해시: $keyHash');
+  } else {
+    debugPrint('Kakao native app key is not configured.');
   }
+
+  runApp(const SoriMoiApp());
 }
 
 // 📱 앱 진입점
@@ -71,12 +52,8 @@ class SoriMoiApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: ThemeData(
-        fontFamily: 'NotoSansKR'
-      ),
-      supportedLocales: const [
-        Locale('ko', 'KR'),
-      ],
+      theme: ThemeData(fontFamily: 'NotoSansKR'),
+      supportedLocales: const [Locale('ko', 'KR')],
       locale: const Locale('ko', 'KR'),
       debugShowCheckedModeBanner: false,
       initialRoute: '/',

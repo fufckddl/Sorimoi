@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pj1/config/app_config.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -18,15 +19,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _rePwController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _nicknameController = TextEditingController(); // ✅ 닉네임 컨트롤러 추가
+  final TextEditingController _nicknameController =
+      TextEditingController(); // ✅ 닉네임 컨트롤러 추가
 
   final _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   bool _isPasswordMatched = true;
 
   void _checkDuplicate() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('중복 확인 기능은 아직 구현되지 않았어요.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('중복 확인 기능은 아직 구현되지 않았어요.')));
   }
 
   void _signUp() async {
@@ -40,7 +42,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _isPasswordMatched = true;
     });
 
-    final url = Uri.parse('http://your-api-host:5000/signup');
+    final url = AppConfig.apiUri('/signup');
     try {
       final response = await http.post(
         url,
@@ -65,25 +67,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('서버 오류: 가입 실패')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('서버 오류: 가입 실패')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('네트워크 오류: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('네트워크 오류: $e')));
     }
   }
 
   Widget _buildTextField(
-      String hint,
-      TextEditingController controller, {
-        bool obscure = false,
-        Widget? suffixIcon,
-        TextInputType keyboardType = TextInputType.text,
-        String? Function(String?)? validator,
-      }) {
+    String hint,
+    TextEditingController controller, {
+    bool obscure = false,
+    Widget? suffixIcon,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: TextFormField(
@@ -95,7 +97,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           hintText: hint,
           border: const OutlineInputBorder(),
           suffixIcon: suffixIcon,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 12,
+          ),
         ),
       ),
     );
@@ -165,20 +170,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 _pwController,
                 obscure: true,
               ),
-              _buildTextField(
-                '비밀번호 재입력',
-                _rePwController,
-                obscure: true,
-              ),
+              _buildTextField('비밀번호 재입력', _rePwController, obscure: true),
               if (!_isPasswordMatched)
                 const Text(
                   '비밀번호가 일치하지 않습니다.',
                   style: TextStyle(color: Colors.red),
                 ),
-              _buildTextField(
-                '이름을 입력해주세요.',
-                _nameController,
-              ),
+              _buildTextField('이름을 입력해주세요.', _nameController),
               _buildTextField(
                 '닉네임을 입력해주세요.', // ✅ 닉네임 필드 추가
                 _nicknameController,
@@ -199,13 +197,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   backgroundColor: const Color(0xFFF1EDFB),
                   minimumSize: const Size.fromHeight(50),
                 ),
-                child: const Text('가입하기', style: TextStyle(color: Colors.black)),
+                child: const Text(
+                  '가입하기',
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
               const SizedBox(height: 16),
               const Divider(),
               const Center(child: Text('OR')),
               _socialButton('카카오 계정으로 시작하기', Colors.yellow, Icons.chat),
-              _socialButton('Google 계정으로 시작하기', Colors.grey, Icons.g_mobiledata),
+              _socialButton(
+                'Google 계정으로 시작하기',
+                Colors.grey,
+                Icons.g_mobiledata,
+              ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -213,7 +218,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const Text('이미 계정이 있으신가요?'),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('로그인', style: TextStyle(color: Colors.purple)),
+                    child: const Text(
+                      '로그인',
+                      style: TextStyle(color: Colors.purple),
+                    ),
                   ),
                 ],
               ),

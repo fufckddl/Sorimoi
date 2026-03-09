@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:pj1/config/app_config.dart';
 
 class RecordingHomeScreen extends StatefulWidget {
   const RecordingHomeScreen({super.key});
@@ -24,7 +25,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
   }
 
   Future<void> _fetchCategoryList() async {
-    final response = await http.get(Uri.parse('http://your-api-host:5000/category'));
+    final response = await http.get(AppConfig.apiUri('/category'));
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       setState(() {
@@ -35,7 +36,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
   }
 
   Future<void> _fetchAudioList() async {
-    final response = await http.get(Uri.parse('http://your-api-host:5000/audio'));
+    final response = await http.get(AppConfig.apiUri('/audio'));
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       Map<String, List<Map<String, dynamic>>> newScriptData = {};
@@ -44,7 +45,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
       for (var audio in data) {
         final categoryId = audio['categoryId'];
         final category = categoryList.firstWhere(
-              (c) => c['id'] == categoryId,
+          (c) => c['id'] == categoryId,
           orElse: () => {},
         );
         if (category.isNotEmpty) {
@@ -52,17 +53,22 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
           final createdAt = audio['createdAt'] ?? '';
           String formattedDate = '';
           try {
-            formattedDate = DateFormat('yyyy.MM.dd').format(DateTime.parse(createdAt));
+            formattedDate = DateFormat(
+              'yyyy.MM.dd',
+            ).format(DateTime.parse(createdAt));
           } catch (_) {}
 
           newCategoryDate[categoryName] = formattedDate;
-          newScriptData[categoryName] = (newScriptData[categoryName] ?? [])..add({
-            'id': audio['id'],
-            'categoryId': audio['categoryId'],
-            'name': audio['audioTitle']?.toString() ?? '',
-            'score': audio['score'] is double ? audio['score'] : double.tryParse(audio['score'].toString()) ?? 0.0,
-            'star': audio['star'] == true || audio['star'] == 1,
-          });
+          newScriptData[categoryName] = (newScriptData[categoryName] ?? [])
+            ..add({
+              'id': audio['id'],
+              'categoryId': audio['categoryId'],
+              'name': audio['audioTitle']?.toString() ?? '',
+              'score': audio['score'] is double
+                  ? audio['score']
+                  : double.tryParse(audio['score'].toString()) ?? 0.0,
+              'star': audio['star'] == true || audio['star'] == 1,
+            });
         }
       }
 
@@ -73,7 +79,11 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
     }
   }
 
-  Future<void> _toggleStar(int categoryId, int scriptId, String categoryName) async {
+  Future<void> _toggleStar(
+    int categoryId,
+    int scriptId,
+    String categoryName,
+  ) async {
     final List<Map<String, dynamic>> scripts = scriptData[categoryName] ?? [];
     final int index = scripts.indexWhere((s) => s['id'] == scriptId);
     if (index == -1) return;
@@ -88,7 +98,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
 
     try {
       await http.put(
-        Uri.parse('http://your-api-host:5000/audio/star/$scriptId'),
+        AppConfig.apiUri('/audio/star/$scriptId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'star': newStar}),
       );
@@ -103,7 +113,7 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
   Future<int?> _saveCategoryToServer(String name) async {
     try {
       final response = await http.post(
-        Uri.parse('http://your-api-host:5000/category'),
+        AppConfig.apiUri('/category'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'categoryName': name,
@@ -121,10 +131,14 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
     return null;
   }
 
-  Future<bool> _saveAudioToServer(int categoryId, String fileTitle, String categoryName) async {
+  Future<bool> _saveAudioToServer(
+    int categoryId,
+    String fileTitle,
+    String categoryName,
+  ) async {
     try {
       final response = await http.post(
-        Uri.parse('http://your-api-host:5000/audio'),
+        AppConfig.apiUri('/audio'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'categoryId': categoryId,
@@ -180,13 +194,19 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ...categoryList.map((category) => ListTile(
-                  title: Text(category['categoryName']),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showFileTitleDialog(context, category['categoryName'], category['id']);
-                  },
-                )),
+                ...categoryList.map(
+                  (category) => ListTile(
+                    title: Text(category['categoryName']),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showFileTitleDialog(
+                        context,
+                        category['categoryName'],
+                        category['id'],
+                      );
+                    },
+                  ),
+                ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.add),
@@ -212,7 +232,10 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
         title: const Text('새 카테고리 이름 입력'),
         content: TextField(controller: controller),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
           TextButton(
             onPressed: () async {
               final name = controller.text.trim();
@@ -231,7 +254,11 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
     );
   }
 
-  void _showFileTitleDialog(BuildContext context, String category, int categoryId) {
+  void _showFileTitleDialog(
+    BuildContext context,
+    String category,
+    int categoryId,
+  ) {
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -239,7 +266,10 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
         title: const Text('파일 제목을 입력해주세요.'),
         content: TextField(controller: controller),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
           TextButton(
             onPressed: () async {
               final fileTitle = controller.text.trim();
@@ -276,53 +306,63 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
               const SizedBox(width: 8),
               Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
               const Spacer(),
-              Text(date, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                date,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          ...scripts.map((script) => Padding(
-            padding: const EdgeInsets.only(left: 12.0, bottom: 6),
-            child: Row(
-              children: [
-                const Text('•'),
-                const SizedBox(width: 4),
-                Expanded(child: Text(script['name'] ?? '')),
-                IconButton(
-                  icon: Icon(
-                    script['star'] ? Icons.star : Icons.star_border,
-                    color: script['star'] ? Colors.amber : Colors.grey,
-                  ),
-                  onPressed: () {
-                    final categoryId = script['categoryId'];
-                    final audioId = script['id'];
+          ...scripts.map(
+            (script) => Padding(
+              padding: const EdgeInsets.only(left: 12.0, bottom: 6),
+              child: Row(
+                children: [
+                  const Text('•'),
+                  const SizedBox(width: 4),
+                  Expanded(child: Text(script['name'] ?? '')),
+                  IconButton(
+                    icon: Icon(
+                      script['star'] ? Icons.star : Icons.star_border,
+                      color: script['star'] ? Colors.amber : Colors.grey,
+                    ),
+                    onPressed: () {
+                      final categoryId = script['categoryId'];
+                      final audioId = script['id'];
 
-                    if (categoryId is int && audioId is int) {
-                      _toggleStar(categoryId, audioId, title);
-                    } else {
-                      print('❌ 오류: categoryId 또는 id가 null입니다.');
-                    }
-                  },
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: script['score'] >= 80
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                      if (categoryId is int && audioId is int) {
+                        _toggleStar(categoryId, audioId, title);
+                      } else {
+                        print('❌ 오류: categoryId 또는 id가 null입니다.');
+                      }
+                    },
                   ),
-                  child: Text(
-                    '${script['score']}점',
-                    style: TextStyle(
-                      color: script['score'] >= 80 ? Colors.green : Colors.red,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: script['score'] >= 80
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${script['score']}점',
+                      style: TextStyle(
+                        color: script['score'] >= 80
+                            ? Colors.green
+                            : Colors.red,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -361,15 +401,17 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
               ),
               child: Column(
                 children: [
-                  Image.asset(
-                    'assets/mic.png',
-                    width: 80,
-                    height: 80,
-                  ),
+                  Image.asset('assets/mic.png', width: 80, height: 80),
                   const SizedBox(height: 16),
-                  const Text('오늘의 소리를 녹음해보세요!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Text(
+                    '오늘의 소리를 녹음해보세요!',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
-                  const Text('카테고리를 선택하여 시작하세요', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const Text(
+                    '카테고리를 선택하여 시작하세요',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => _showAddCategoryDialog(context),
@@ -378,7 +420,10 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -406,7 +451,10 @@ class _RecordingHomeScreenState extends State<RecordingHomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.record_voice_over), label: '연습하기'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.record_voice_over),
+            label: '연습하기',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
         ],

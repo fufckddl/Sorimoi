@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pj1/userhome/userHome.dart';
 import 'package:pj1/user/profile/profileHome.dart';
+import 'package:pj1/config/app_config.dart';
 
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({super.key});
@@ -65,7 +66,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     if (path == null) return;
 
     final file = File(path);
-    final uri = Uri.parse("http://your-api-host:5000/practice");
+    final uri = AppConfig.apiUri('/practice');
     final request = http.MultipartRequest("POST", uri);
     request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
@@ -163,7 +164,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     children: [
                       Icon(Icons.description, size: 18),
                       SizedBox(width: 6),
-                      Text("연습할 문장", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        "연습할 문장",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -197,7 +201,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     children: [
                       Icon(Icons.mic, size: 18),
                       SizedBox(width: 6),
-                      Text("인식된 문장", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        "인식된 문장",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -220,8 +227,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
             ),
 
             // 정확도 및 진행률
-            Text("정확도: ${(accuracy * 100).toStringAsFixed(1)}%",
-                style: const TextStyle(fontSize: 18)),
+            Text(
+              "정확도: ${(accuracy * 100).toStringAsFixed(1)}%",
+              style: const TextStyle(fontSize: 18),
+            ),
             const SizedBox(height: 12),
             LinearProgressIndicator(
               value: progress,
@@ -243,11 +252,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 ElevatedButton.icon(
                   icon: Icon(_isRecording ? Icons.stop : Icons.mic),
                   label: Text(_isRecording ? "연습 종료" : "말하기 시작"),
-                  onPressed: _isRecording ? _stopRecordingAndSend : _startRecording,
+                  onPressed: _isRecording
+                      ? _stopRecordingAndSend
+                      : _startRecording,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 Row(
@@ -258,7 +272,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey[200],
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -268,7 +285,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -290,7 +310,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.record_voice_over), label: '연습하기'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.record_voice_over),
+            label: '연습하기',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
         ],
